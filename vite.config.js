@@ -11,14 +11,25 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          recharts: ['recharts'],
-          lucide: ['lucide-react'],
-          supabase: ['@supabase/supabase-js']
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react/') || id.includes('react-dom/')) {
+              return 'vendor'
+            }
+            if (id.includes('recharts')) {
+              return 'recharts'
+            }
+            if (id.includes('lucide-react')) {
+              return 'lucide'
+            }
+            if (id.includes('@supabase')) {
+              return 'supabase'
+            }
+          }
         }
       }
     }
   }
 })
+
 
