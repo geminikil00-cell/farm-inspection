@@ -1,0 +1,3 @@
+name = "farm-inspection"
+account_id = "f3988ca02d5b5aef9e2514bc47beba9b"
+pages_build_output_dir = "./dist"
