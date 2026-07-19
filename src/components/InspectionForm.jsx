@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Calendar, User, FileText, Trash2, Printer, Save, Image as ImageIcon, Plus, ArrowLeftRight } from 'lucide-react';
+import { Calendar, User, FileText, Trash2, Printer, Save, Image as ImageIcon, Plus, ArrowLeftRight, FileDown } from 'lucide-react';
 import { AutoResizeTextarea } from './AutoResizeTextarea';
 import { STATUS_OPTIONS } from '../translations';
 
@@ -25,6 +25,7 @@ export const InspectionForm = ({
   clearCurrentForm,
   saveToHistory,
   handlePrint,
+  handleDownloadPDF,
   t,
   isRtl
 }) => {
@@ -287,22 +288,30 @@ export const InspectionForm = ({
 
       {/* Mobile Sticky Action Bar */}
       <div className="sm:hidden sticky bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-gray-200 p-2.5 shadow-lg flex items-center justify-around z-30 no-print">
-        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 border rounded-md">
+        <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 border rounded-md">
           <span className="text-[10px] text-gray-500 font-bold">{t.score}</span>
           <span className={`text-sm font-bold ${getScoreColor(currentScore)}`}>{currentScore}%</span>
         </div>
 
         <button
           onClick={saveToHistory}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white rounded-md text-xs font-bold shadow-sm"
+          className="flex items-center gap-1 px-2.5 py-1.5 bg-green-600 text-white rounded-md text-xs font-bold shadow-sm"
         >
           <Save size={14} />
           <span>{t.save}</span>
         </button>
 
         <button
+          onClick={handleDownloadPDF}
+          className="flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 text-white rounded-md text-xs font-bold shadow-sm"
+        >
+          <FileDown size={14} />
+          <span>PDF</span>
+        </button>
+
+        <button
           onClick={clearCurrentForm}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-md text-xs font-bold"
+          className="flex items-center gap-1 px-2 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-md text-xs font-bold"
         >
           <Trash2 size={14} />
           <span>{t.clear}</span>

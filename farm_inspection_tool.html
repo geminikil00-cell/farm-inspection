@@ -36,6 +36,9 @@
     <!-- Supabase SDK (UMD) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
+    <!-- html2pdf.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <!-- Font -->
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
 
@@ -231,7 +234,10 @@
             TrendingUp: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>,
             TrendingDown: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/></svg>,
             Minus: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/></svg>,
-            Activity: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            Activity: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>,
+            Menu: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>,
+            X: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>,
+            FileDown: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4h4"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg>
         };
 
         const FACILITIES = {
@@ -735,12 +741,35 @@
 
             const handlePrint = () => { window.print(); };
 
-            if (!isDataLoaded || Object.keys(formData).length === 0) return <div className="flex items-center justify-center h-screen bg-gray-50">جاري تحميل البيانات...</div>;
+            const handleDownloadPDF = async () => {
+                const element = document.getElementById('printable-area') || document.querySelector('.max-w-7xl');
+                if (!element) { window.print(); return; }
+                if (window.html2pdf) {
+                    const dateStr = currentData?.date || new Date().toISOString().split('T')[0];
+                    const opt = {
+                        margin:       [0.3, 0.3, 0.3, 0.3],
+                        filename:     `تفتيش_${FACILITIES[activeTab].title}_${dateStr}.pdf`,
+                        image:        { type: 'jpeg', quality: 0.98 },
+                        html2canvas:  { scale: 2, useCORS: true, logging: false },
+                        jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
+                    };
+                    try {
+                        await window.html2pdf().set(opt).from(element).save();
+                    } catch (err) {
+                        console.error('html2pdf error:', err);
+                        window.print();
+                    }
+                } else {
+                    window.print();
+                }
+            };
+
+            if (!isDataLoaded || Object.keys(formData).length === 0) return <div className="flex items-center justify-center h-screen bg-gray-50 font-bold text-gray-700">جاري تحميل البيانات...</div>;
 
             const currentData = formData[activeTab];
             
             if (!currentData) {
-                 return <div className="flex items-center justify-center h-screen bg-gray-50">جاري تحميل البيانات...</div>;
+                 return <div className="flex items-center justify-center h-screen bg-gray-50 font-bold text-gray-700">جاري تحميل البيانات...</div>;
             }
 
             const currentRows = currentData.rows || [];
@@ -751,27 +780,71 @@
             return (
                 <div className="min-h-screen bg-gray-50 font-sans text-right" dir="rtl">
                     <div className="flex h-screen overflow-hidden">
-                        <aside className={`sidebar bg-slate-900 text-white flex-shrink-0 transition-all duration-300 ease-in-out no-print overflow-y-auto ${showSidebar ? 'w-64' : 'w-0'}`}>
+                        
+                        {/* Mobile Backdrop Overlay */}
+                        {showSidebar && (
+                            <div
+                                className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 md:hidden transition-opacity"
+                                onClick={() => setShowSidebar(false)}
+                                aria-hidden="true"
+                            />
+                        )}
+
+                        {/* Sidebar Nav */}
+                        <aside
+                            className={`sidebar bg-slate-900 text-white flex-shrink-0 transition-all duration-300 ease-in-out no-print overflow-y-auto 
+                                fixed inset-y-0 start-0 z-50 md:static md:z-auto ${
+                                    showSidebar ? 'w-64' : 'max-md:hidden md:w-0'
+                                }`}
+                        >
                             <div className="p-4 border-b border-slate-700 flex items-center justify-between">
                                 <h1 className="text-xl font-bold flex items-center gap-2">
                                     <Icons.ClipboardCheck className="w-6 h-6 text-green-400" />
                                     <span>تفتيش المزرعة</span>
                                 </h1>
+                                <button
+                                    onClick={() => setShowSidebar(false)}
+                                    className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 md:hidden"
+                                    aria-label="Close sidebar"
+                                >
+                                    <Icons.X size={20} />
+                                </button>
                             </div>
                             <nav className="p-4 space-y-2">
                                 <div className="text-xs text-slate-500 font-bold px-2 mb-2">مواقع التفتيش</div>
                                 {Object.values(FACILITIES).map(facility => (
-                                    <button key={facility.id} onClick={() => { setActiveTab(facility.id); setViewMode('inspection'); setViewingRecordId(null); }} className={`w-full text-right p-3 rounded-lg flex items-center gap-3 transition-colors ${activeTab === facility.id && viewMode === 'inspection' ? 'bg-green-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300'}`}>
+                                    <button
+                                        key={facility.id}
+                                        onClick={() => {
+                                            setActiveTab(facility.id);
+                                            setViewMode('inspection');
+                                            setViewingRecordId(null);
+                                            if (window.innerWidth < 768) setShowSidebar(false);
+                                        }}
+                                        className={`w-full text-right p-3 rounded-lg flex items-center gap-3 transition-colors ${activeTab === facility.id && viewMode === 'inspection' ? 'bg-green-600 text-white shadow-lg font-bold' : 'hover:bg-slate-800 text-slate-300'}`}
+                                    >
                                         <div className={`w-2 h-2 rounded-full ${activeTab === facility.id && viewMode === 'inspection' ? 'bg-white' : 'bg-slate-600'}`}></div>
-                                        {facility.title}
+                                        <span className="truncate">{facility.title}</span>
                                     </button>
                                 ))}
                                 <div className="my-4 border-t border-slate-700"></div>
-                                <button onClick={() => setViewMode('history')} className={`w-full text-right p-3 rounded-lg flex items-center gap-3 transition-colors ${viewMode === 'history' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300'}`}>
+                                <button
+                                    onClick={() => {
+                                        setViewMode('history');
+                                        if (window.innerWidth < 768) setShowSidebar(false);
+                                    }}
+                                    className={`w-full text-right p-3 rounded-lg flex items-center gap-3 transition-colors ${viewMode === 'history' ? 'bg-blue-600 text-white shadow-lg font-bold' : 'hover:bg-slate-800 text-slate-300'}`}
+                                >
                                     <Icons.History size={20} />
                                     <span>سجل التفتيش (الأرشيف)</span>
                                 </button>
-                                <button onClick={() => setViewMode('analytics')} className={`w-full text-right p-3 rounded-lg flex items-center gap-3 transition-colors ${viewMode === 'analytics' ? 'bg-purple-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300'}`}>
+                                <button
+                                    onClick={() => {
+                                        setViewMode('analytics');
+                                        if (window.innerWidth < 768) setShowSidebar(false);
+                                    }}
+                                    className={`w-full text-right p-3 rounded-lg flex items-center gap-3 transition-colors ${viewMode === 'analytics' ? 'bg-purple-600 text-white shadow-lg font-bold' : 'hover:bg-slate-800 text-slate-300'}`}
+                                >
                                     <Icons.BarChart2 size={20} />
                                     <span>لوحة المؤشرات (Charts)</span>
                                 </button>
@@ -782,213 +855,260 @@
                         </aside>
 
                         <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
-                            <header className="bg-white shadow-sm border-b px-6 py-4 flex items-center justify-between no-print z-10">
-                                <div className="flex items-center gap-4">
-                                    <button onClick={() => setShowSidebar(!showSidebar)} className="p-2 hover:bg-gray-100 rounded-full text-gray-600">
-                                        {showSidebar ? <Icons.ChevronRight /> : <Icons.ChevronLeft />}
+                            {/* Header */}
+                            <header className="bg-white shadow-sm border-b px-3 py-3 sm:px-6 sm:py-4 flex flex-wrap items-center justify-between gap-2 no-print z-10">
+                                <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+                                    <button
+                                        onClick={() => setShowSidebar(!showSidebar)}
+                                        className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 flex items-center justify-center"
+                                        aria-label="Toggle Sidebar"
+                                    >
+                                        <span className="md:hidden">
+                                            {showSidebar ? <Icons.X size={20} /> : <Icons.Menu size={20} />}
+                                        </span>
+                                        <span className="hidden md:block">
+                                            {showSidebar ? <Icons.ChevronRight size={20} /> : <Icons.ChevronLeft size={20} />}
+                                        </span>
                                     </button>
-                                    <div>
-                                        <h2 className="text-xl font-bold text-gray-800">
+                                    <div className="min-w-0">
+                                        <h2 className="text-base sm:text-xl font-bold text-gray-800 truncate max-w-[140px] xs:max-w-[200px] sm:max-w-none">
                                             {viewMode === 'inspection' ? FACILITIES[activeTab].title : viewMode === 'history' ? 'سجل التفتيش التاريخي' : 'لوحة المؤشرات والتحليل'}
                                         </h2>
                                     </div>
                                 </div>
+
                                 {viewMode === 'inspection' && (
-                                    <div className="flex gap-2 items-center">
+                                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                                         {lastRecord && (
-                                            <div className={`px-4 py-1.5 rounded-lg border flex items-center gap-3 transition-colors ${scoreDifference > 0 ? 'bg-green-50 border-green-200 text-green-700' : scoreDifference < 0 ? 'bg-red-50 border-red-200 text-red-700' : 'bg-gray-50 border-gray-200 text-gray-600'}`}>
+                                            <div className={`hidden sm:flex px-2.5 py-1 rounded-lg border items-center gap-2 transition-colors ${scoreDifference > 0 ? 'bg-green-50 border-green-200 text-green-700' : scoreDifference < 0 ? 'bg-red-50 border-red-200 text-red-700' : 'bg-gray-50 border-gray-200 text-gray-600'}`}>
                                                 <span className="text-xs font-bold">مقارنة بآخر تفتيش</span>
-                                                <div className="flex items-center gap-1 dir-ltr" style={{ direction: 'ltr' }}>
-                                                    {scoreDifference > 0 ? <Icons.TrendingUp size={18} /> : scoreDifference < 0 ? <Icons.TrendingDown size={18} /> : <Icons.Minus size={18} />}
-                                                    <span className="font-bold text-lg">{scoreDifference > 0 ? '+' : ''}{scoreDifference}%</span>
+                                                <div className="flex items-center gap-1 dir-ltr text-sm font-bold" style={{ direction: 'ltr' }}>
+                                                    {scoreDifference > 0 ? <Icons.TrendingUp size={16} /> : scoreDifference < 0 ? <Icons.TrendingDown size={16} /> : <Icons.Minus size={16} />}
+                                                    <span>{scoreDifference > 0 ? '+' : ''}{scoreDifference}%</span>
                                                 </div>
                                             </div>
                                         )}
-                                        <div className="ml-2 px-4 py-1.5 bg-white rounded-lg border border-gray-200 flex items-center gap-3 shadow-sm">
-                                            <span className="text-xs text-gray-500 font-bold">النتيجة الحالية</span>
-                                            <span className={`text-xl font-bold ${getScoreColor(currentScore)}`}>{currentScore}%</span>
+                                        <div className="px-2.5 py-1 sm:px-4 sm:py-1.5 bg-white rounded-lg border border-gray-200 flex items-center gap-1.5 sm:gap-3 shadow-sm">
+                                            <span className="text-[10px] sm:text-xs text-gray-500 font-bold">النتيجة الحالية</span>
+                                            <span className={`text-base sm:text-xl font-bold ${getScoreColor(currentScore)}`}>{currentScore}%</span>
                                         </div>
                                         
-                                        <button onClick={saveToHistory} className="flex items-center gap-2 px-3 py-2 text-white bg-green-600 hover:bg-green-700 rounded-lg shadow-sm transition-colors text-sm font-medium">
-                                            <Icons.Save size={16} /><span>حفظ</span>
+                                        <button onClick={saveToHistory} className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-white bg-green-600 hover:bg-green-700 rounded-lg shadow-sm transition-colors text-xs sm:text-sm font-medium">
+                                            <Icons.Save size={16} /><span className="hidden sm:inline">حفظ</span>
                                         </button>
-                                        <div className="w-px h-8 bg-gray-300 mx-1"></div>
-                                        <button onClick={clearCurrentForm} className="flex items-center gap-2 px-3 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors border border-red-200 text-sm">
-                                            <Icons.Trash2 size={16} /><span>مسح</span>
+                                        <button onClick={handleDownloadPDF} className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors text-xs sm:text-sm font-medium" title="تحميل PDF">
+                                            <Icons.FileDown size={16} /><span className="hidden sm:inline">تحميل PDF</span>
                                         </button>
-                                        <button onClick={handlePrint} className="flex items-center gap-2 px-3 py-2 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg shadow-sm transition-colors text-sm">
-                                            <Icons.Printer size={16} /><span>طباعة</span>
+                                        <button onClick={clearCurrentForm} className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors border border-red-200 text-xs sm:text-sm">
+                                            <Icons.Trash2 size={16} /><span className="hidden md:inline">مسح</span>
+                                        </button>
+                                        <button onClick={handlePrint} className="hidden xs:flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg shadow-sm transition-colors text-xs sm:text-sm">
+                                            <Icons.Printer size={16} /><span className="hidden md:inline">طباعة</span>
                                         </button>
                                     </div>
                                 )}
                                 {viewMode === 'analytics' && (
-                                    <button onClick={handlePrint} className="flex items-center gap-2 px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors text-sm font-medium">
-                                        <Icons.Printer size={18} /><span>طباعة التقرير البياني</span>
+                                    <button onClick={handlePrint} className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors text-xs sm:text-sm font-medium">
+                                        <Icons.Printer size={16} /><span>طباعة التقرير البياني</span>
                                     </button>
                                 )}
                             </header>
 
-                            <div className="flex-1 overflow-auto p-4 sm:p-8">
+                            <div className="flex-1 overflow-auto p-2 sm:p-8">
                                 {viewMode === 'inspection' && (
-                                    <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-sm border border-gray-200 min-h-[29.7cm]">
-                                        <div className="p-8 border-b-2 border-gray-100">
-                                            <div className="flex justify-between items-start mb-8">
-                                                <div>
-                                                    <h1 className="text-2xl font-bold text-gray-900 mb-2">نموذج التفتيش على منشآت وأقسام المزرعة</h1>
-                                                    <p className="text-gray-500">الموقع: <span className="font-semibold text-gray-800">{FACILITIES[activeTab].title}</span></p>
-                                                </div>
-                                                <div className="flex gap-6 print-only">
-                                                    <div className="text-center">
-                                                        <div className="text-4xl font-bold border-4 border-black p-2 rounded-lg">{currentScore}%</div>
-                                                        <div className="text-sm font-bold mt-1">التقييم العام</div>
+                                    <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-sm border border-gray-200 min-h-[29.7cm] flex flex-col justify-between" id="printable-area">
+                                        <div>
+                                            <div className="p-4 sm:p-8 border-b-2 border-gray-100">
+                                                <div className="flex justify-between items-start mb-4 sm:mb-8">
+                                                    <div>
+                                                        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">نموذج التفتيش على منشآت وأقسام المزرعة</h1>
+                                                        <p className="text-sm sm:text-base text-gray-500">الموقع: <span className="font-semibold text-gray-800">{FACILITIES[activeTab].title}</span></p>
                                                     </div>
-                                                    {lastRecord && (
+                                                    <div className="flex gap-6 print-only">
                                                         <div className="text-center">
-                                                            <div className={`text-4xl font-bold border-4 p-2 rounded-lg ${scoreDifference > 0 ? 'border-green-600 text-green-700' : scoreDifference < 0 ? 'border-red-600 text-red-700' : 'border-gray-400 text-gray-600'}`} style={{ direction: 'ltr' }}>
-                                                                {scoreDifference > 0 ? '+' : ''}{scoreDifference}%
-                                                            </div>
-                                                            <div className="text-sm font-bold mt-1">التغير</div>
+                                                            <div className="text-4xl font-bold border-4 border-black p-2 rounded-lg">{currentScore}%</div>
+                                                            <div className="text-sm font-bold mt-1">التقييم العام</div>
                                                         </div>
-                                                    )}
+                                                        {lastRecord && (
+                                                            <div className="text-center">
+                                                                <div className={`text-4xl font-bold border-4 p-2 rounded-lg ${scoreDifference > 0 ? 'border-green-600 text-green-700' : scoreDifference < 0 ? 'border-red-600 text-red-700' : 'border-gray-400 text-gray-600'}`} style={{ direction: 'ltr' }}>
+                                                                    {scoreDifference > 0 ? '+' : ''}{scoreDifference}%
+                                                                </div>
+                                                                <div className="text-sm font-bold mt-1">التغير</div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-left hidden sm:block">
+                                                        <div className="text-sm text-gray-400">رقم النموذج: F-70</div>
+                                                        <div className="text-sm text-gray-400">تاريخ الإصدار: 2024</div>
+                                                    </div>
                                                 </div>
-                                                <div className="text-left hidden sm:block">
-                                                    <div className="text-sm text-gray-400">رقم النموذج: F-70</div>
-                                                    <div className="text-sm text-gray-400">تاريخ الإصدار: 2024</div>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 bg-gray-50 p-4 sm:p-6 rounded-lg border border-gray-100">
+                                                    <div className="space-y-2">
+                                                        <label className="text-sm font-medium text-gray-600 flex items-center gap-2"><Icons.User size={16} />المفتش المسؤول</label>
+                                                        <input type="text" value={currentData.inspector} onChange={(e) => handleHeaderChange('inspector', e.target.value)} placeholder="اكتب اسم المفتش..." className="w-full p-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none bg-white" />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <label className="text-sm font-medium text-gray-600 flex items-center gap-2"><Icons.Calendar size={16} />تاريخ التفتيش</label>
+                                                        <input type="date" value={currentData.date} onChange={(e) => handleHeaderChange('date', e.target.value)} className="w-full p-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none bg-white" />
+                                                    </div>
+                                                    <div className="md:col-span-2 space-y-2">
+                                                        <label className="text-sm font-medium text-gray-600 flex items-center gap-2"><Icons.FileText size={16} />ملاحظات عامة</label>
+                                                        <AutoResizeTextarea 
+                                                            value={currentData.notes} 
+                                                            onChange={(e) => handleHeaderChange('notes', e.target.value)} 
+                                                            placeholder="أضف ملاحظات عامة حول التفتيش هنا..." 
+                                                            className="w-full p-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none bg-white"
+                                                        />
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-6 rounded-lg border border-gray-100">
-                                                <div className="space-y-2">
-                                                    <label className="text-sm font-medium text-gray-600 flex items-center gap-2"><Icons.User size={16} />المفتش المسؤول</label>
-                                                    <input type="text" value={currentData.inspector} onChange={(e) => handleHeaderChange('inspector', e.target.value)} placeholder="اكتب اسم المفتش..." className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none bg-white" />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <label className="text-sm font-medium text-gray-600 flex items-center gap-2"><Icons.Calendar size={16} />تاريخ التفتيش</label>
-                                                    <input type="date" value={currentData.date} onChange={(e) => handleHeaderChange('date', e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none bg-white" />
-                                                </div>
-                                                <div className="md:col-span-2 space-y-2">
-                                                    <label className="text-sm font-medium text-gray-600 flex items-center gap-2"><Icons.FileText size={16} />ملاحظات عامة</label>
-                                                    <AutoResizeTextarea 
-                                                        value={currentData.notes} 
-                                                        onChange={(e) => handleHeaderChange('notes', e.target.value)} 
-                                                        placeholder="أضف ملاحظات عامة حول التفتيش هنا..." 
-                                                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none bg-white"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="p-0 sm:p-4">
-                                            <div className="overflow-x-auto">
-                                                <table className="w-full text-right text-sm border-collapse">
-                                                    <thead className="bg-gray-50 text-gray-700 font-bold border-b-2 border-gray-200">
-                                                        <tr>
-                                                            <th className="p-3 border text-right w-52 min-w-[120px] print-tight">المعيار / البند</th>
-                                                            {activeTab === 'lakes' ? (
-                                                                <React.Fragment>
-                                                                    {[1,2,3,4,5,6].map(i => (
-                                                                        <th key={i} className="p-3 border text-center min-w-[95px] print-tight">بركة {i}</th>
-                                                                    ))}
-                                                                </React.Fragment>
-                                                            ) : (
-                                                                <th className="p-3 border text-center w-40 min-w-[140px]">التقييم</th>
-                                                            )}
-                                                            <th className="p-3 border text-right min-w-[100px] print-tight">الإجراء التصحيحي المطلوب</th>
-                                                            <th className="p-3 border text-right w-32 min-w-[80px] print-tight">المسؤول</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody className="divide-y divide-gray-100">
-                                                        {currentRows.map((row, index) => (
-                                                            <tr key={index} className="hover:bg-gray-50 transition-colors">
-                                                                <td className="p-3 border font-medium text-gray-800 bg-white align-top whitespace-pre-wrap print-tight">{row.criteria}</td>
+                                            <div className="p-2 sm:p-4">
+                                                <div className="overflow-x-auto rounded-lg border border-gray-200">
+                                                    <table className="w-full text-right text-xs sm:text-sm border-collapse">
+                                                        <thead className="bg-gray-50 text-gray-700 font-bold border-b-2 border-gray-200">
+                                                            <tr>
+                                                                <th className="p-2.5 sm:p-3 border text-right w-48 sm:w-52 min-w-[130px] print-tight">المعيار / البند</th>
                                                                 {activeTab === 'lakes' ? (
-                                                                    [1,2,3,4,5,6].map(n => (
-                                                                        <td key={n} className="p-1 border bg-white align-top">
-                                                                            <select 
-                                                                                value={row[`status_${n}`] || ''} 
-                                                                                onChange={(e) => handleRowChange(index, `status_${n}`, e.target.value)} 
-                                                                                className={`w-full p-1 rounded outline-none border-transparent focus:border-blue-300 text-center font-medium text-[9px] h-[38px] leading-tight ${STATUS_OPTIONS.find(o => o.value === row[`status_${n}`])?.color || 'bg-white'}`}
-                                                                            >
+                                                                    <React.Fragment>
+                                                                        {[1,2,3,4,5,6].map(i => (
+                                                                            <th key={i} className="p-2 sm:p-3 border text-center min-w-[85px] sm:min-w-[95px] print-tight">بركة {i}</th>
+                                                                        ))}
+                                                                    </React.Fragment>
+                                                                ) : (
+                                                                    <th className="p-2 sm:p-3 border text-center w-36 sm:w-40 min-w-[110px]">التقييم</th>
+                                                                )}
+                                                                <th className="p-2 sm:p-3 border text-right min-w-[120px] print-tight">الإجراء التصحيحي المطلوب</th>
+                                                                <th className="p-2 sm:p-3 border text-right w-28 sm:w-32 min-w-[90px] print-tight">المسؤول</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="divide-y divide-gray-100">
+                                                            {currentRows.map((row, index) => (
+                                                                <tr key={index} className="hover:bg-gray-50 transition-colors">
+                                                                    <td className="p-2.5 sm:p-3 border font-medium text-gray-800 bg-white align-top whitespace-pre-wrap print-tight">{row.criteria}</td>
+                                                                    {activeTab === 'lakes' ? (
+                                                                        [1,2,3,4,5,6].map(n => (
+                                                                            <td key={n} className="p-1 border bg-white align-top">
+                                                                                <select 
+                                                                                    value={row[`status_${n}`] || ''} 
+                                                                                    onChange={(e) => handleRowChange(index, `status_${n}`, e.target.value)} 
+                                                                                    className={`w-full p-1 rounded outline-none border border-gray-200 focus-ring text-center font-medium text-[10px] sm:text-xs h-[38px] leading-tight ${STATUS_OPTIONS.find(o => o.value === row[`status_${n}`])?.color || 'bg-white'}`}
+                                                                                >
+                                                                                    {STATUS_OPTIONS.map(opt => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
+                                                                                </select>
+                                                                            </td>
+                                                                        ))
+                                                                    ) : (
+                                                                        <td className="p-1 border bg-white align-top">
+                                                                            <select value={row.status} onChange={(e) => handleRowChange(index, 'status', e.target.value)} className={`w-full p-1.5 rounded outline-none border border-gray-200 focus-ring text-center font-medium text-xs sm:text-sm h-[38px] ${STATUS_OPTIONS.find(o => o.value === row.status)?.color || 'bg-white'}`}>
                                                                                 {STATUS_OPTIONS.map(opt => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
                                                                             </select>
                                                                         </td>
-                                                                    ))
-                                                                ) : (
+                                                                    )}
                                                                     <td className="p-1 border bg-white align-top">
-                                                                        <select value={row.status} onChange={(e) => handleRowChange(index, 'status', e.target.value)} className={`w-full p-2 rounded outline-none border-transparent focus:border-blue-300 text-center font-medium h-[38px] ${STATUS_OPTIONS.find(o => o.value === row.status)?.color || 'bg-white'}`}>
-                                                                            {STATUS_OPTIONS.map(opt => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
-                                                                        </select>
+                                                                        <AutoResizeTextarea
+                                                                            value={row.action}
+                                                                            onChange={(e) => handleRowChange(index, 'action', e.target.value)}
+                                                                            placeholder="ملاحظات..."
+                                                                            className="w-full p-1.5 text-gray-700 outline-none focus:bg-gray-50 border border-transparent focus:border-gray-300 rounded text-xs sm:text-sm"
+                                                                        />
                                                                     </td>
-                                                                )}
-                                                                <td className="p-1 border bg-white align-top">
-                                                                    <AutoResizeTextarea
-                                                                        value={row.action}
-                                                                        onChange={(e) => handleRowChange(index, 'action', e.target.value)}
-                                                                        placeholder="ملاحظات..."
-                                                                        className="w-full p-2 text-gray-700 outline-none focus:bg-gray-50 rounded"
-                                                                    />
-                                                                </td>
-                                                                <td className="p-1 border bg-white align-top">
-                                                                    <AutoResizeTextarea
-                                                                        value={row.responsible}
-                                                                        onChange={(e) => handleRowChange(index, 'responsible', e.target.value)}
-                                                                        className="w-full p-2 text-gray-700 outline-none focus:bg-gray-50 rounded"
-                                                                    />
-                                                                </td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            </div>
+                                                                    <td className="p-1 border bg-white align-top">
+                                                                        <AutoResizeTextarea
+                                                                            value={row.responsible}
+                                                                            onChange={(e) => handleRowChange(index, 'responsible', e.target.value)}
+                                                                            className="w-full p-1.5 text-gray-700 outline-none focus:bg-gray-50 border border-transparent focus:border-gray-300 rounded text-xs sm:text-sm"
+                                                                        />
+                                                                    </td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
 
-                                            {/* Photo Upload Section */}
-                                            <div className="mt-8 border-t pt-6 px-4 no-print">
-                                                <div className="flex items-center justify-between mb-4">
-                                                    <label className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                                                        <Icons.Eye size={20} className="text-blue-600" />
-                                                        الصور المرفقة
-                                                    </label>
-                                                    <label className="cursor-pointer bg-blue-50 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-100 transition-colors text-sm font-bold flex items-center gap-2 border border-blue-200">
-                                                        <input type="file" multiple accept="image/*" className="hidden" onChange={handlePhotoUpload} />
-                                                        <Icons.ClipboardCheck size={16} />
-                                                        <span>+ إضافة صور</span>
-                                                    </label>
+                                                {/* Photo Upload Section */}
+                                                <div className="mt-6 sm:mt-8 border-t pt-4 sm:pt-6 px-2 sm:px-4 no-print">
+                                                    <div className="flex items-center justify-between mb-4">
+                                                        <label className="text-base sm:text-lg font-bold text-gray-800 flex items-center gap-2">
+                                                            <Icons.Eye size={18} className="text-blue-600" />
+                                                            الصور المرفقة
+                                                        </label>
+                                                        <label className="cursor-pointer bg-blue-50 text-blue-600 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg hover:bg-blue-100 transition-colors text-xs sm:text-sm font-bold flex items-center gap-1.5 border border-blue-200">
+                                                            <input type="file" multiple accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+                                                            <Icons.ClipboardCheck size={16} />
+                                                            <span>+ إضافة صور</span>
+                                                        </label>
+                                                    </div>
+                                                    
+                                                    {currentPhotos.length > 0 ? (
+                                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+                                                            {currentPhotos.map((src, index) => (
+                                                                <div key={index} className="relative group aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                                                                    <img src={src} alt={`Photo ${index + 1}`} className="w-full h-full object-cover" />
+                                                                    <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-all duration-200"></div>
+                                                                    <button 
+                                                                        onClick={() => removePhoto(index)}
+                                                                        className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all shadow-md hover:bg-red-600"
+                                                                        title="حذف الصورة"
+                                                                    >
+                                                                        <Icons.Trash2 size={16} />
+                                                                    </button>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-center py-6 sm:py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200 text-gray-400 text-sm">
+                                                            لا توجد صور مرفقة
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 
-                                                {currentPhotos.length > 0 ? (
-                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                                        {currentPhotos.map((src, index) => (
-                                                            <div key={index} className="relative group aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-sm">
-                                                                <img src={src} alt={`Photo ${index + 1}`} className="w-full h-full object-cover" />
-                                                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200"></div>
-                                                                <button 
-                                                                    onClick={() => removePhoto(index)}
-                                                                    className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all shadow-sm hover:bg-red-600"
-                                                                    title="حذف الصورة"
-                                                                >
-                                                                    <Icons.Trash2 size={16} />
-                                                                </button>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                ) : (
-                                                    <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200 text-gray-400">
-                                                        لا توجد صور مرفقة
+                                                {/* Print-only Photos Section at Bottom */}
+                                                {currentPhotos.length > 0 && (
+                                                    <div className="hidden print-only mt-8 photo-appendix">
+                                                        <h3 className="text-lg font-bold mb-4 border-b pb-2">ملحق الصور</h3>
+                                                        <div className="grid grid-cols-2 gap-4">
+                                                            {currentPhotos.map((src, index) => (
+                                                                <div key={index} className="border border-gray-300 p-1 rounded">
+                                                                    <img src={src} alt={`Attachment ${index + 1}`} className="w-full h-auto object-contain max-h-[300px]" />
+                                                                </div>
+                                                            ))}
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>
-                                            
-                                            {/* Print-only Photos Section at Bottom */}
-                                            {currentPhotos.length > 0 && (
-                                                <div className="hidden print-only mt-8 photo-appendix">
-                                                    <h3 className="text-lg font-bold mb-4 border-b pb-2">ملحق الصور</h3>
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        {currentPhotos.map((src, index) => (
-                                                            <div key={index} className="border border-gray-300 p-1 rounded">
-                                                                <img src={src} alt={`Attachment ${index + 1}`} className="w-full h-auto object-contain max-h-[300px]" />
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
+                                        </div>
+
+                                        {/* Mobile Sticky Action Bar */}
+                                        <div className="sm:hidden sticky bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-gray-200 p-2.5 shadow-lg flex items-center justify-around z-30 no-print">
+                                            <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 border rounded-md">
+                                                <span className="text-[10px] text-gray-500 font-bold">النتيجة</span>
+                                                <span className={`text-sm font-bold ${getScoreColor(currentScore)}`}>{currentScore}%</span>
+                                            </div>
+
+                                            <button
+                                                onClick={saveToHistory}
+                                                className="flex items-center gap-1 px-2.5 py-1.5 bg-green-600 text-white rounded-md text-xs font-bold shadow-sm"
+                                            >
+                                                <Icons.Save size={14} />
+                                                <span>حفظ</span>
+                                            </button>
+
+                                            <button
+                                                onClick={handleDownloadPDF}
+                                                className="flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 text-white rounded-md text-xs font-bold shadow-sm"
+                                            >
+                                                <Icons.FileDown size={14} />
+                                                <span>PDF</span>
+                                            </button>
+
+                                            <button
+                                                onClick={clearCurrentForm}
+                                                className="flex items-center gap-1 px-2 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-md text-xs font-bold"
+                                            >
+                                                <Icons.Trash2 size={14} />
+                                                <span>مسح</span>
+                                            </button>
                                         </div>
                                     </div>
                                 )}

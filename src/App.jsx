@@ -4,7 +4,7 @@ import {
   Wrench, Trash2, Waves, Package, Users, ClipboardList,
   History, BarChart3, ChevronLeft, ChevronRight, Save,
   Printer, Plus, ArrowLeftRight, Trash, Globe, Shield, RefreshCw,
-  Menu, X
+  Menu, X, FileDown
 } from 'lucide-react';
 import { supabase } from './supabase';
 import { saveToDB, getFromDB } from './db';
@@ -555,6 +555,33 @@ function App() {
     window.print();
   };
 
+  const handleDownloadPDF = async () => {
+    const element = document.getElementById('printable-area') || document.querySelector('.print-scale-down') || document.querySelector('#main-content');
+    if (!element) {
+      window.print();
+      return;
+    }
+
+    if (window.html2pdf) {
+      const dateStr = currentData?.date || new Date().toISOString().split('T')[0];
+      const opt = {
+        margin:       [0.3, 0.3, 0.3, 0.3],
+        filename:     `Farm_Inspection_${activeTab}_${dateStr}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, logging: false },
+        jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
+      };
+      try {
+        await window.html2pdf().set(opt).from(element).save();
+      } catch (err) {
+        console.error('html2pdf error, falling back to print:', err);
+        window.print();
+      }
+    } else {
+      window.print();
+    }
+  };
+
   if (!isDataLoaded || !currentData) {
     return (
       <div className="flex flex-col gap-4 items-center justify-center h-screen bg-gray-50 text-gray-700">
@@ -783,6 +810,16 @@ function App() {
                   </button>
 
                   <button
+                    onClick={handleDownloadPDF}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors text-xs sm:text-sm font-medium focus-ring"
+                    aria-label="Download PDF"
+                    title={t.downloadPDF || 'Download PDF'}
+                  >
+                    <FileDown size={16} />
+                    <span className="hidden sm:inline">{t.downloadPDF || 'Download PDF'}</span>
+                  </button>
+
+                  <button
                     onClick={handlePrint}
                     className="hidden xs:flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg shadow-sm transition-colors text-xs sm:text-sm focus-ring"
                     aria-label="Print Form"
@@ -808,7 +845,7 @@ function App() {
           {/* Subview router */}
           <main className="flex-1 overflow-auto p-4 sm:p-8" id="main-content" role="main">
             {viewMode === 'inspection' && (
-              <div className="print-scale-down">
+              <div className="print-scale-down" id="printable-area">
                 <InspectionForm
                   activeTab={activeTab}
                   facilityTitle={FACILITY_TRANSLATIONS[lang]?.[activeTab]?.title || FACILITY_TRANSLATIONS.ar[activeTab].title}
@@ -823,6 +860,7 @@ function App() {
                   clearCurrentForm={clearCurrentForm}
                   saveToHistory={saveToHistory}
                   handlePrint={handlePrint}
+                  handleDownloadPDF={handleDownloadPDF}
                   t={t}
                   isRtl={isRtl}
                 />
