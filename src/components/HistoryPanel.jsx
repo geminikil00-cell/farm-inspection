@@ -55,18 +55,18 @@ export const HistoryPanel = ({
   return (
     <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-300">
       {/* Filters Control Panel */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-6 mb-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6 mb-6">
           <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
             <FileText size={20} className="text-blue-600" />
             <span>{t.historyHeader}</span>
           </h3>
-          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+          <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
             {/* Location filter */}
-            <div className="flex items-center bg-gray-50 p-1 rounded-lg border border-gray-200 shadow-sm flex-1 min-w-[200px]">
-              <Filter size={16} className="text-gray-400 mx-2" />
+            <div className="flex items-center bg-gray-50 p-1 rounded-lg border border-gray-200 shadow-sm flex-1 min-w-[180px]">
+              <Filter size={16} className="text-gray-400 mx-2 flex-shrink-0" />
               <select
-                className="bg-transparent border-none outline-none text-sm text-gray-700 p-2 w-full focus-ring"
+                className="bg-transparent border-none outline-none text-xs sm:text-sm text-gray-700 p-2 w-full focus-ring"
                 value={historyFilter}
                 onChange={(e) => setHistoryFilter(e.target.value)}
                 aria-label={t.filterSites}
@@ -82,9 +82,9 @@ export const HistoryPanel = ({
 
             {/* Year filter */}
             <div className="flex items-center bg-gray-50 p-1 rounded-lg border border-gray-200 shadow-sm">
-              <Calendar size={16} className="text-gray-400 mx-2" />
+              <Calendar size={16} className="text-gray-400 mx-2 flex-shrink-0" />
               <select
-                className="bg-transparent border-none outline-none text-sm text-gray-700 p-2 focus-ring"
+                className="bg-transparent border-none outline-none text-xs sm:text-sm text-gray-700 p-2 focus-ring w-full"
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(e.target.value)}
                 aria-label="Filter by Year"
@@ -99,7 +99,7 @@ export const HistoryPanel = ({
             {/* Quarter filter */}
             <div className="flex items-center bg-gray-50 p-1 rounded-lg border border-gray-200 shadow-sm">
               <select
-                className="bg-transparent border-none outline-none text-sm text-gray-700 p-2 focus-ring"
+                className="bg-transparent border-none outline-none text-xs sm:text-sm text-gray-700 p-2 focus-ring w-full"
                 value={selectedQuarter}
                 onChange={(e) => setSelectedQuarter(e.target.value)}
                 aria-label="Filter by Quarter"
@@ -134,23 +134,23 @@ export const HistoryPanel = ({
                   </span>
                 </div>
                 <div className="overflow-x-auto rounded-lg border border-gray-100">
-                  <table className="w-full text-start text-sm border-collapse" role="table">
+                  <table className="w-full text-start text-xs sm:text-sm border-collapse" role="table">
                     <thead className="bg-gray-50 text-gray-600 border-b">
                       <tr role="row">
-                        <th className="p-3 font-semibold text-start">{t.date}</th>
-                        <th className="p-3 font-semibold text-start">{t.location}</th>
-                        <th className="p-3 font-semibold text-start">{t.inspector}</th>
-                        <th className="p-3 font-semibold text-center">{t.score}</th>
-                        <th className="p-3 font-semibold text-center">{t.action}</th>
+                        <th className="p-2.5 sm:p-3 font-semibold text-start min-w-[90px]">{t.date}</th>
+                        <th className="p-2.5 sm:p-3 font-semibold text-start min-w-[120px]">{t.location}</th>
+                        <th className="p-2.5 sm:p-3 font-semibold text-start min-w-[100px]">{t.inspector}</th>
+                        <th className="p-2.5 sm:p-3 font-semibold text-center min-w-[70px]">{t.score}</th>
+                        <th className="p-2.5 sm:p-3 font-semibold text-center min-w-[100px]">{t.action}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 bg-white">
                       {group.records.map((record) => (
                         <tr key={record.id} className="hover:bg-gray-50 group transition-colors" role="row">
-                          <td className="p-3 text-gray-800 font-medium" role="cell">{record.date}</td>
-                          <td className="p-3 text-blue-600 font-semibold" role="cell">{record.facility_title}</td>
-                          <td className="p-3 text-gray-600" role="cell">{record.inspector}</td>
-                          <td className="p-3 text-center" role="cell">
+                          <td className="p-2.5 sm:p-3 text-gray-800 font-medium whitespace-nowrap" role="cell">{record.date}</td>
+                          <td className="p-2.5 sm:p-3 text-blue-600 font-semibold" role="cell">{record.facility_title}</td>
+                          <td className="p-2.5 sm:p-3 text-gray-600" role="cell">{record.inspector}</td>
+                          <td className="p-2.5 sm:p-3 text-center" role="cell">
                             <span
                               className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${
                                 record.score >= 90
@@ -167,10 +167,10 @@ export const HistoryPanel = ({
                               {record.score}%
                             </span>
                           </td>
-                          <td className="p-3 flex justify-center gap-2" role="cell">
+                          <td className="p-2.5 sm:p-3 flex justify-center items-center gap-1.5" role="cell">
                             <button
                               onClick={() => loadRecord(record)}
-                              className="flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors text-xs font-bold focus-ring border border-blue-100 shadow-sm"
+                              className="flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors text-xs font-bold focus-ring border border-blue-100 shadow-sm"
                               title={t.load}
                               aria-label={`${t.load} record from ${record.date} for ${record.facility_title}`}
                             >
@@ -179,7 +179,7 @@ export const HistoryPanel = ({
                             </button>
                             <button
                               onClick={() => deleteRecord(record.id)}
-                              className="flex items-center gap-1 px-2.5 py-1 bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors text-xs border border-red-100 shadow-sm opacity-0 group-hover:opacity-100 focus-ring"
+                              className="flex items-center gap-1 px-2 py-1 bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors text-xs border border-red-100 shadow-sm opacity-100 md:opacity-0 md:group-hover:opacity-100 focus-ring"
                               title={t.delete}
                               aria-label={`${t.delete} record from ${record.date} for ${record.facility_title}`}
                             >

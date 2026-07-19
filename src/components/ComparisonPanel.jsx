@@ -240,35 +240,35 @@ export const ComparisonPanel = ({ history, facilities, t, lang }) => {
   return (
     <div className="space-y-6">
       {/* Mode Selector */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <h3 className="text-base sm:text-lg font-bold text-gray-800 flex items-center gap-2">
           <ArrowLeftRight className="text-orange-500" size={20} />
           <span>{t.comparisons}</span>
         </h3>
-        <div className="flex bg-gray-100 p-1 rounded-lg border border-gray-200 shadow-inner">
+        <div className="flex bg-gray-100 p-1 rounded-lg border border-gray-200 shadow-inner w-full sm:w-auto">
           <button
             onClick={() => setCompMode('time')}
-            className={`px-4 py-2 rounded-md text-sm font-semibold transition-all duration-200 ${
+            className={`flex-1 sm:flex-none px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-semibold transition-all duration-200 ${
               compMode === 'time' ? 'bg-white text-blue-600 shadow' : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            <Calendar size={16} className="inline-block mr-1.5 -mt-0.5" />
+            <Calendar size={15} className="inline-block mr-1.5 -mt-0.5" />
             <span>{t.timeVsTime}</span>
           </button>
           <button
             onClick={() => setCompMode('location')}
-            className={`px-4 py-2 rounded-md text-sm font-semibold transition-all duration-200 ${
+            className={`flex-1 sm:flex-none px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-semibold transition-all duration-200 ${
               compMode === 'location' ? 'bg-white text-blue-600 shadow' : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            <MapPin size={16} className="inline-block mr-1.5 -mt-0.5" />
+            <MapPin size={15} className="inline-block mr-1.5 -mt-0.5" />
             <span>{t.locationVsLocation}</span>
           </button>
         </div>
       </div>
 
       {/* Filter Control Panels */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200">
         {compMode === 'time' ? (
           <>
             {/* Time period A */}

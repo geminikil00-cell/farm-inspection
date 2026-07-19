@@ -3,7 +3,8 @@ import {
   Sprout, Warehouse, Droplet, ShieldAlert, Home,
   Wrench, Trash2, Waves, Package, Users, ClipboardList,
   History, BarChart3, ChevronLeft, ChevronRight, Save,
-  Printer, Plus, ArrowLeftRight, Trash, Globe, Shield, RefreshCw
+  Printer, Plus, ArrowLeftRight, Trash, Globe, Shield, RefreshCw,
+  Menu, X
 } from 'lucide-react';
 import { supabase } from './supabase';
 import { saveToDB, getFromDB } from './db';
@@ -103,7 +104,7 @@ function App() {
   const [viewMode, setViewMode] = useState('inspection');
   const [formData, setFormData] = useState({});
   const [history, setHistory] = useState([]);
-  const [showSidebar, setShowSidebar] = useState(true);
+  const [showSidebar, setShowSidebar] = useState(() => typeof window !== 'undefined' ? window.innerWidth >= 768 : true);
   const [historyFilter, setHistoryFilter] = useState('all');
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [viewingRecordId, setViewingRecordId] = useState(null);
@@ -567,11 +568,21 @@ function App() {
     <div className={`min-h-screen bg-gray-50 flex flex-col ${isRtl ? 'text-right' : 'text-left'}`} dir={isRtl ? 'rtl' : 'ltr'}>
       <div className="flex h-screen overflow-hidden">
         
+        {/* Mobile Backdrop Overlay */}
+        {showSidebar && (
+          <div
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 md:hidden transition-opacity"
+            onClick={() => setShowSidebar(false)}
+            aria-hidden="true"
+          />
+        )}
+
         {/* Sidebar Nav */}
         <aside
-          className={`sidebar bg-slate-900 text-white flex-shrink-0 transition-all duration-300 ease-in-out no-print overflow-y-auto ${
-            showSidebar ? 'w-64' : 'w-0'
-          }`}
+          className={`sidebar bg-slate-900 text-white flex-shrink-0 transition-all duration-300 ease-in-out no-print overflow-y-auto 
+            fixed inset-y-0 start-0 z-50 md:static md:z-auto ${
+              showSidebar ? 'w-64' : 'max-md:hidden md:w-0'
+            }`}
           role="navigation"
           aria-label={t.siteInspection}
         >
@@ -580,6 +591,13 @@ function App() {
               <ClipboardList className="w-6 h-6 text-green-400" />
               <span>{t.title}</span>
             </h1>
+            <button
+              onClick={() => setShowSidebar(false)}
+              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 md:hidden"
+              aria-label="Close sidebar"
+            >
+              <X size={20} />
+            </button>
           </div>
           <nav className="p-4 space-y-2">
             <div className="text-xs text-slate-500 font-bold px-2 mb-2">{t.siteInspection}</div>
@@ -594,6 +612,7 @@ function App() {
                     setActiveTab(key);
                     setViewMode('inspection');
                     setViewingRecordId(null);
+                    if (window.innerWidth < 768) setShowSidebar(false);
                   }}
                   className={`w-full text-start p-3 rounded-lg flex items-center gap-3 transition-colors focus-ring ${
                     activeTab === key && viewMode === 'inspection'
@@ -611,7 +630,10 @@ function App() {
             <div className="my-4 border-t border-slate-700"></div>
             
             <button
-              onClick={() => setViewMode('history')}
+              onClick={() => {
+                setViewMode('history');
+                if (window.innerWidth < 768) setShowSidebar(false);
+              }}
               className={`w-full text-start p-3 rounded-lg flex items-center gap-3 transition-colors focus-ring ${
                 viewMode === 'history' ? 'bg-blue-600 text-white shadow-lg font-bold' : 'hover:bg-slate-800 text-slate-300'
               }`}
@@ -622,7 +644,10 @@ function App() {
             </button>
             
             <button
-              onClick={() => setViewMode('analytics')}
+              onClick={() => {
+                setViewMode('analytics');
+                if (window.innerWidth < 768) setShowSidebar(false);
+              }}
               className={`w-full text-start p-3 rounded-lg flex items-center gap-3 transition-colors focus-ring ${
                 viewMode === 'analytics' ? 'bg-purple-600 text-white shadow-lg font-bold' : 'hover:bg-slate-800 text-slate-300'
               }`}
@@ -633,7 +658,10 @@ function App() {
             </button>
 
             <button
-              onClick={() => setViewMode('comparisons')}
+              onClick={() => {
+                setViewMode('comparisons');
+                if (window.innerWidth < 768) setShowSidebar(false);
+              }}
               className={`w-full text-start p-3 rounded-lg flex items-center gap-3 transition-colors focus-ring ${
                 viewMode === 'comparisons' ? 'bg-orange-600 text-white shadow-lg font-bold' : 'hover:bg-slate-800 text-slate-300'
               }`}
@@ -653,17 +681,22 @@ function App() {
         <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
           
           {/* Header */}
-          <header className="bg-white shadow-sm border-b px-6 py-4 flex items-center justify-between no-print z-10">
-            <div className="flex items-center gap-4">
+          <header className="bg-white shadow-sm border-b px-3 py-3 sm:px-6 sm:py-4 flex flex-wrap items-center justify-between gap-2 no-print z-10">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0">
               <button
                 onClick={() => setShowSidebar(!showSidebar)}
-                className="p-2 hover:bg-gray-100 rounded-full text-gray-600 focus-ring"
+                className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 focus-ring flex items-center justify-center"
                 aria-label="Toggle Sidebar"
               >
-                {showSidebar ? <ChevronLeft /> : <ChevronRight />}
+                <span className="md:hidden">
+                  {showSidebar ? <X size={20} /> : <Menu size={20} />}
+                </span>
+                <span className="hidden md:block">
+                  {showSidebar ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+                </span>
               </button>
-              <div>
-                <h2 className="text-xl font-bold text-gray-800">
+              <div className="min-w-0">
+                <h2 className="text-base sm:text-xl font-bold text-gray-800 truncate max-w-[140px] xs:max-w-[200px] sm:max-w-none">
                   {viewMode === 'inspection'
                     ? FACILITY_TRANSLATIONS[lang]?.[activeTab]?.title || FACILITY_TRANSLATIONS.ar[activeTab].title
                     : viewMode === 'history'
@@ -675,14 +708,14 @@ function App() {
               </div>
             </div>
 
-            <div className="flex gap-3 items-center">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-3">
               {/* Language Selection */}
-              <div className="relative flex items-center gap-1.5 bg-gray-100 px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm focus-within:ring-2 focus-within:ring-green-500">
-                <Globe size={16} className="text-gray-500" />
+              <div className="relative flex items-center gap-1 bg-gray-100 px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg border border-gray-200 shadow-sm focus-within:ring-2 focus-within:ring-green-500 text-xs sm:text-sm">
+                <Globe size={14} className="text-gray-500 flex-shrink-0" />
                 <select
                   value={lang}
                   onChange={(e) => setLang(e.target.value)}
-                  className="bg-transparent border-none outline-none text-sm font-semibold text-gray-700 cursor-pointer"
+                  className="bg-transparent border-none outline-none text-xs sm:text-sm font-semibold text-gray-700 cursor-pointer"
                   aria-label="Change Language"
                 >
                   {LANGUAGES.map((l) => (
@@ -703,14 +736,14 @@ function App() {
                 title={isOnline ? "Online" : "Offline"}
                 aria-label={isOnline ? "Server connected" : "Offline, saving local drafts"}
               >
-                <Shield size={16} />
+                <Shield size={14} />
               </div>
 
               {viewMode === 'inspection' && (
-                <div className="flex gap-2 items-center">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   {lastRecord && (
                     <div
-                      className={`px-4 py-1.5 rounded-lg border flex items-center gap-3 transition-colors ${
+                      className={`hidden sm:flex px-2.5 py-1 rounded-lg border items-center gap-2 transition-colors ${
                         scoreDifference > 0
                           ? 'bg-green-50 border-green-200 text-green-700'
                           : scoreDifference < 0
@@ -719,32 +752,30 @@ function App() {
                       }`}
                     >
                       <span className="text-xs font-bold">{t.compareLast}</span>
-                      <div className="flex items-center gap-1 dir-ltr font-bold text-lg" style={{ direction: 'ltr' }}>
+                      <div className="flex items-center gap-1 dir-ltr font-bold text-sm" style={{ direction: 'ltr' }}>
                         {scoreDifference > 0 ? '+' : ''}
                         {scoreDifference}%
                       </div>
                     </div>
                   )}
 
-                  <div className="px-4 py-1.5 bg-white rounded-lg border border-gray-200 flex items-center gap-3 shadow-sm">
-                    <span className="text-xs text-gray-500 font-bold">{t.score}</span>
-                    <span className={`text-xl font-bold ${getScoreColor(currentScore)}`}>{currentScore}%</span>
+                  <div className="px-2.5 py-1 sm:px-4 sm:py-1.5 bg-white rounded-lg border border-gray-200 flex items-center gap-1.5 sm:gap-3 shadow-sm">
+                    <span className="text-[10px] sm:text-xs text-gray-500 font-bold">{t.score}</span>
+                    <span className={`text-base sm:text-xl font-bold ${getScoreColor(currentScore)}`}>{currentScore}%</span>
                   </div>
 
                   <button
                     onClick={saveToHistory}
-                    className="flex items-center gap-2 px-3 py-2 text-white bg-green-600 hover:bg-green-700 rounded-lg shadow-sm transition-colors text-sm font-medium focus-ring"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-white bg-green-600 hover:bg-green-700 rounded-lg shadow-sm transition-colors text-xs sm:text-sm font-medium focus-ring"
                     aria-label="Save Inspection"
                   >
                     <Save size={16} />
-                    <span className="hidden md:inline">{t.save}</span>
+                    <span className="hidden sm:inline">{t.save}</span>
                   </button>
-
-                  <div className="w-px h-8 bg-gray-300 mx-1"></div>
 
                   <button
                     onClick={clearCurrentForm}
-                    className="flex items-center gap-2 px-3 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors border border-red-200 text-sm focus-ring"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors border border-red-200 text-xs sm:text-sm focus-ring"
                     aria-label="Clear Form"
                   >
                     <Trash size={16} />
@@ -753,7 +784,7 @@ function App() {
 
                   <button
                     onClick={handlePrint}
-                    className="flex items-center gap-2 px-3 py-2 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg shadow-sm transition-colors text-sm focus-ring"
+                    className="hidden xs:flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg shadow-sm transition-colors text-xs sm:text-sm focus-ring"
                     aria-label="Print Form"
                   >
                     <Printer size={16} />
@@ -765,9 +796,9 @@ function App() {
               {viewMode === 'analytics' && (
                 <button
                   onClick={handlePrint}
-                  className="flex items-center gap-2 px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors text-sm font-medium focus-ring"
+                  className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors text-xs sm:text-sm font-medium focus-ring"
                 >
-                  <Printer size={18} />
+                  <Printer size={16} />
                   <span>{t.printReport}</span>
                 </button>
               )}

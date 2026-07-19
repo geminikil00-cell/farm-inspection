@@ -182,16 +182,16 @@ export const AnalyticsDashboard = ({ history, t, lang }) => {
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Filters Control Panel */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-col md:flex-row items-center justify-between gap-4 no-print">
-        <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-          <Calendar className="text-blue-600" size={20} />
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 no-print">
+        <h3 className="text-base sm:text-lg font-bold text-gray-800 flex items-center gap-2">
+          <Calendar className="text-blue-600" size={18} />
           <span>Filters</span>
         </h3>
-        <div className="flex flex-wrap gap-3 items-center">
+        <div className="flex flex-wrap gap-2 sm:gap-3 items-center w-full md:w-auto">
           <select
             value={yearFilter}
             onChange={(e) => setYearFilter(e.target.value)}
-            className="bg-gray-50 border rounded-lg p-2 outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-sm text-gray-700 shadow-sm"
+            className="bg-gray-50 border rounded-lg p-2 outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-xs sm:text-sm text-gray-700 shadow-sm flex-1 md:flex-none"
           >
             <option value="">{t.allYears}</option>
             {availableYears.map(y => (
@@ -201,7 +201,7 @@ export const AnalyticsDashboard = ({ history, t, lang }) => {
           <select
             value={quarterFilter}
             onChange={(e) => setQuarterFilter(e.target.value)}
-            className="bg-gray-50 border rounded-lg p-2 outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-sm text-gray-700 shadow-sm"
+            className="bg-gray-50 border rounded-lg p-2 outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-xs sm:text-sm text-gray-700 shadow-sm flex-1 md:flex-none"
           >
             <option value="">{t.allQuarters}</option>
             {availableQuarters.map(q => (
@@ -211,28 +211,28 @@ export const AnalyticsDashboard = ({ history, t, lang }) => {
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h3 className="text-xl font-bold text-gray-800">{t.analytics}</h3>
+          <h3 className="text-lg sm:text-xl font-bold text-gray-800">{t.analytics}</h3>
         </div>
-        <div className="flex gap-4">
-          <div className="bg-white px-4 py-2 rounded-lg shadow-sm border text-sm font-bold text-gray-700">
+        <div className="flex gap-2 sm:gap-4 text-xs sm:text-sm">
+          <div className="bg-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg shadow-sm border font-bold text-gray-700">
             {t.recordCount}: {filteredHistory.length}
           </div>
-          <div className="bg-white px-4 py-2 rounded-lg shadow-sm border text-sm font-bold text-gray-700">
+          <div className="bg-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg shadow-sm border font-bold text-gray-700">
             {t.average}: <span className="text-green-600">{averageScore}%</span>
           </div>
         </div>
       </div>
 
       {filteredHistory.length === 0 ? (
-        <div className="bg-gray-100 rounded-xl p-8 text-center text-gray-500">
-          <p className="font-bold">No records match the active filter criteria.</p>
+        <div className="bg-gray-100 rounded-xl p-6 sm:p-8 text-center text-gray-500">
+          <p className="font-bold text-sm sm:text-base">No records match the active filter criteria.</p>
         </div>
       ) : (
-        <div className="analytics-print-container grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="analytics-print-container grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Trend Chart */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 analytics-print-item focus-ring" tabIndex="0" aria-label="Performance trend chart">
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 analytics-print-item focus-ring" tabIndex="0" aria-label="Performance trend chart">
             <h4 className="font-bold text-gray-700 mb-6 flex items-center gap-2">
               <TrendingUp size={18} className="text-blue-500" />
               {t.performanceTrend}
