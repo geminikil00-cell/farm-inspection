@@ -53,89 +53,32 @@
 
         /* Print & Professional PDF Export Styles */
         @media print {
-            @page {
-                size: landscape;
-                margin: 0.2cm;
-            }
-            html, body, #root, 
-            main, .flex, .flex-col, .flex-1,
-            .h-screen, .min-h-screen,
-            .overflow-hidden, .overflow-auto, .overflow-x-auto, .overflow-y-auto {
-                height: auto !important;
-                min-height: 0 !important;
-                max-height: none !important;
-                overflow: visible !important;
-                position: static !important;
-            }
-            .flex.h-screen.overflow-hidden,
-            .flex-1.flex.flex-col.overflow-hidden {
-                display: block !important;
-            }
+            @page { size: landscape; margin: 0.2cm; }
             .print-scale-down { transform: scale(0.95); transform-origin: top right; }
-            .no-print, aside, nav, header, .sidebar, button, .sticky { display: none !important; }
+            table { width: 100% !important; table-layout: fixed; }
+            th, td { word-wrap: break-word; overflow-wrap: break-word; white-space: normal !important; height: auto !important; }
+            tr { height: auto !important; }
+            th.print-tight, td.print-tight { padding: 2px !important; font-size: 9pt !important; }
+            .no-print { display: none !important; }
             .print-only { display: block !important; }
-            .max-w-7xl, .max-w-6xl {
-                max-width: 100% !important;
-                width: 100% !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                border: none !important;
-                box-shadow: none !important;
-                display: block !important;
-                min-height: 0 !important;
-            }
-            tr, td, th, tbody {
-                page-break-inside: avoid !important;
-                break-inside: avoid !important;
-            }
-            table {
-                width: 100% !important;
-                border-collapse: collapse !important;
-                table-layout: fixed !important;
-                page-break-inside: auto !important;
-            }
-            thead { display: table-header-group !important; }
-            th, td {
-                border: 1px solid #94a3b8 !important;
-                padding: 5px 8px !important;
-                font-size: 9.5pt !important;
-                word-break: break-word !important;
-                white-space: normal !important;
-            }
-            th {
-                background-color: #f1f5f9 !important;
-                color: #0f172a !important;
-                font-weight: bold !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-            input, textarea, select {
-                border: none !important;
-                outline: none !important;
-                background: transparent !important;
-                box-shadow: none !important;
-                appearance: none !important;
-                -webkit-appearance: none !important;
-                padding: 0 !important;
-                font-size: 9.5pt !important;
-                color: #0f172a !important;
-                resize: none !important;
-            }
-            .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl { box-shadow: none !important; }
-            .analytics-print-container {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 16px;
-                width: 100%;
-            }
-            .analytics-print-item { page-break-inside: avoid !important; break-inside: avoid !important; }
-            .analytics-print-full { grid-column: 1 / -1; page-break-inside: avoid !important; break-inside: avoid !important; }
-            .photo-appendix {
-                display: block !important;
-                page-break-before: always !important;
-                break-before: page !important;
-            }
+            html, body, #root { height: auto !important; overflow: visible !important; background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .h-screen, .min-h-screen { height: auto !important; min-height: 0 !important; }
+            .overflow-hidden, .overflow-auto { overflow: visible !important; }
+            .flex.h-screen.overflow-hidden { display: block !important; }
+            aside, nav, .sidebar { display: none !important; }
+            .max-w-7xl { max-width: 100% !important; width: 100% !important; margin: 0 !important; border: none !important; box-shadow: none !important; }
+            textarea { border: none !important; resize: none !important; overflow: hidden !important; min-height: auto !important; padding: 0 !important; }
+            .shadow-sm, .shadow-md, .shadow-lg { box-shadow: none !important; }
+            th { background-color: #f3f4f6 !important; color: black !important; -webkit-print-color-adjust: exact; }
+            table { border-collapse: collapse; width: 100%; }
+            td, th { border: 1px solid #000 !important; padding: 4px !important; font-size: 10pt; page-break-inside: avoid; }
+            .page-break-before { page-break-before: always; }
+            .analytics-print-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; }
+            .analytics-print-item { break-inside: avoid; }
+            .analytics-print-full { grid-column: 1 / -1; }
+            .photo-appendix { display: block !important; page-break-before: always; }
         }
+
     </style>
 </head>
 <body class="bg-gray-50 text-right" dir="rtl">
