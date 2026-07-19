@@ -30,139 +30,113 @@
   outline-offset: 2px;
 }
 
-/* Print Styles */
+/* Print & Professional PDF Export Styles */
 @media print {
   @page {
-    size: landscape;
-    margin: 0.2cm;
+    size: A4 portrait;
+    margin: 8mm 8mm;
   }
   
   .print-scale-down {
-    transform: scale(0.95);
-    transform-origin: top;
-  }
-
-  /* RTL / LTR specific transform origin can be handled inline or generally */
-  [dir="rtl"] .print-scale-down {
-    transform-origin: top right;
-  }
-  [dir="ltr"] .print-scale-down {
-    transform-origin: top left;
-  }
-  
-  table {
-    width: 100% !important;
-    table-layout: fixed;
-  }
-  
-  th, td {
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    white-space: normal !important;
-    height: auto !important;
-  }
-  
-  tr {
-    height: auto !important;
-  }
-  
-  th.print-tight, td.print-tight {
-    padding: 2px !important;
-    font-size: 8pt !important;
-  }
-  
-  .no-print {
-    display: none !important;
-  }
-  
-  .print-only {
-    display: block !important;
+    transform: none !important;
   }
   
   html, body, #root {
     height: auto !important;
     overflow: visible !important;
     background: white !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    color: #0f172a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
   
-  .h-screen, .min-h-screen {
-    height: auto !important;
-    min-height: 0 !important;
-  }
-  
-  .overflow-hidden, .overflow-auto {
-    overflow: visible !important;
-  }
-  
-  .flex.h-screen.overflow-hidden {
-    display: block !important;
-  }
-  
-  aside, nav, .sidebar {
+  .no-print, aside, nav, header, .sidebar, button {
     display: none !important;
   }
   
-  .max-w-7xl {
+  .print-only {
+    display: block !important;
+  }
+
+  .max-w-7xl, .max-w-6xl {
     max-width: 100% !important;
     width: 100% !important;
     margin: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-  }
-  
-  textarea {
-    border: none !important;
-    resize: none !important;
-    overflow: hidden !important;
-    min-height: auto !important;
     padding: 0 !important;
-  }
-  
-  .shadow-sm, .shadow-md, .shadow-lg {
+    border: none !important;
     box-shadow: none !important;
   }
-  
-  th {
-    background-color: #f3f4f6 !important;
-    color: black !important;
-    -webkit-print-color-adjust: exact;
+
+  /* Prevent page breaks inside table rows, cards, and items */
+  tr, td, th, tbody {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
-  
+
   table {
-    border-collapse: collapse;
-    width: 100%;
+    width: 100% !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto !important;
   }
-  
-  td, th {
-    border: 1px solid #000 !important;
-    padding: 4px !important;
-    font-size: 10pt;
-    page-break-inside: avoid;
+
+  thead {
+    display: table-header-group !important;
   }
-  
-  .page-break-before {
-    page-break-before: always;
+
+  th, td {
+    border: 1px solid #94a3b8 !important;
+    padding: 5px 8px !important;
+    font-size: 9.5pt !important;
+    word-break: break-word !important;
   }
-  
+
+  th {
+    background-color: #f1f5f9 !important;
+    color: #0f172a !important;
+    font-weight: bold !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Make form inputs look like clean report text */
+  input, textarea, select {
+    border: none !important;
+    outline: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    padding: 0 !important;
+    font-size: 9.5pt !important;
+    color: #0f172a !important;
+    resize: none !important;
+  }
+
+  .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl {
+    box-shadow: none !important;
+  }
+
   .analytics-print-container {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    gap: 16px;
     width: 100%;
   }
   
   .analytics-print-item {
-    break-inside: avoid;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
   
   .analytics-print-full {
     grid-column: 1 / -1;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
   
   .photo-appendix {
     display: block !important;
-    page-break-before: always;
+    page-break-before: always !important;
+    break-before: page !important;
   }
 }

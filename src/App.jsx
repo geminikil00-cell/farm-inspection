@@ -565,21 +565,22 @@ function App() {
     if (window.html2pdf) {
       const dateStr = currentData?.date || new Date().toISOString().split('T')[0];
       const opt = {
-        margin:       [0.3, 0.3, 0.3, 0.3],
+        margin:       [0.4, 0.4, 0.4, 0.4],
         filename:     `Farm_Inspection_${activeTab}_${dateStr}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true, logging: false },
-        jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
+        html2canvas:  { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' },
+        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' },
+        pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
       };
       try {
         await window.html2pdf().set(opt).from(element).save();
+        return;
       } catch (err) {
         console.error('html2pdf error, falling back to print:', err);
-        window.print();
       }
-    } else {
-      window.print();
     }
+    
+    window.print();
   };
 
   if (!isDataLoaded || !currentData) {
