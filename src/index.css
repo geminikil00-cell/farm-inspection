@@ -37,6 +37,22 @@
     margin: 0.2cm;
   }
   
+  html, body, #root, 
+  main, .flex, .flex-col, .flex-1,
+  .h-screen, .min-h-screen,
+  .overflow-hidden, .overflow-auto, .overflow-x-auto, .overflow-y-auto {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    position: static !important;
+  }
+
+  .flex.h-screen.overflow-hidden,
+  .flex-1.flex.flex-col.overflow-hidden {
+    display: block !important;
+  }
+  
   .print-scale-down {
     transform: scale(0.95);
     transform-origin: top right;
@@ -46,16 +62,7 @@
     transform-origin: top left;
   }
   
-  html, body, #root {
-    height: auto !important;
-    overflow: visible !important;
-    background: white !important;
-    color: #0f172a !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-  
-  .no-print, aside, nav, header, .sidebar, button {
+  .no-print, aside, nav, header, .sidebar, button, .sticky {
     display: none !important;
   }
   
@@ -70,6 +77,8 @@
     padding: 0 !important;
     border: none !important;
     box-shadow: none !important;
+    display: block !important;
+    min-height: 0 !important;
   }
 
   /* Prevent page breaks inside table rows, cards, and items */
@@ -81,6 +90,7 @@
   table {
     width: 100% !important;
     border-collapse: collapse !important;
+    table-layout: fixed !important;
     page-break-inside: auto !important;
   }
 
@@ -93,6 +103,7 @@
     padding: 5px 8px !important;
     font-size: 9.5pt !important;
     word-break: break-word !important;
+    white-space: normal !important;
   }
 
   th {
