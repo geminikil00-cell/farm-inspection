@@ -44,21 +44,31 @@
   .no-print { display: none !important; }
   .print-only { display: block !important; }
 
-  /* Unconstrain EVERY element — this is the key fix.
-     The Vite build compiles Tailwind classes into hashed names,
-     so CSS selectors like .flex.h-screen.overflow-hidden won't match.
-     We must use a universal override on all elements. */
-  * {
+  /* Unconstrain the specific container chain that clips content.
+     Target by element/ID so it works regardless of compiled class names. */
+  html, body, #root,
+  #root > div,
+  #root > div > div,
+  #root > div > div > div,
+  #main-content,
+  main {
     overflow: visible !important;
     height: auto !important;
     min-height: 0 !important;
     max-height: none !important;
+    background: white !important;
+    position: static !important;
   }
 
-  html, body, #root { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  /* Kill ALL fixed/absolute overlays (dark backdrop, modals, etc.) */
+  [class*="fixed"],
+  [class*="backdrop"] {
+    display: none !important;
+  }
+
+  html, body, #root { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   aside, nav, .sidebar { display: none !important; }
   header { display: none !important; }
-  /* Re-hide sticky mobile bar */
   .sticky { display: none !important; }
 
   .max-w-7xl { max-width: 100% !important; width: 100% !important; margin: 0 !important; border: none !important; box-shadow: none !important; }
@@ -73,3 +83,4 @@
   .analytics-print-full { grid-column: 1 / -1; }
   .photo-appendix { display: block !important; page-break-before: always; }
 }
+
