@@ -109,6 +109,8 @@ function App() {
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [viewingRecordId, setViewingRecordId] = useState(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [historyError, setHistoryError] = useState(null);
 
   // Active translation dictionary with automatic English fallback for un-translated keys
   const t = useMemo(() => {
@@ -188,38 +190,45 @@ function App() {
     loadDrafts();
   }, []);
 
-  // Fetch Supabase records and subscribe to realtime updates
-  useEffect(() => {
-    const fetchHistory = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('inspection_tool_records')
-          .select('*')
-          .order('date', { ascending: false });
-        
-        if (error) {
-          console.error("Supabase fetch error:", error);
-          setHistory([]);
-        } else {
-          const normalized = (data || []).map(r => {
-            if (!r.inspection_year || !r.inspection_quarter) {
-              const { year, quarter } = getQuarterAndYear(r.date);
-              return {
-                ...r,
-                inspection_year: r.inspection_year || year,
-                inspection_quarter: r.inspection_quarter || quarter
-              };
-            }
-            return r;
-          });
-          setHistory(normalized);
-        }
-      } catch (err) {
-        console.error("Network error fetching Supabase records:", err);
+  // Fetch Supabase records function
+  const fetchHistory = async () => {
+    setHistoryLoading(true);
+    setHistoryError(null);
+    try {
+      const { data, error } = await supabase
+        .from('inspection_tool_records')
+        .select('*')
+        .order('date', { ascending: false });
+      
+      if (error) {
+        console.error("Supabase fetch error:", error);
+        setHistoryError(error.message);
         setHistory([]);
+      } else {
+        const normalized = (data || []).map(r => {
+          if (!r.inspection_year || !r.inspection_quarter) {
+            const { year, quarter } = getQuarterAndYear(r.date);
+            return {
+              ...r,
+              inspection_year: r.inspection_year || year,
+              inspection_quarter: r.inspection_quarter || quarter
+            };
+          }
+          return r;
+        });
+        setHistory(normalized);
       }
-    };
+    } catch (err) {
+      console.error("Network error fetching Supabase records:", err);
+      setHistoryError(err.message || "Network error");
+      setHistory([]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
 
+  // Fetch initial records and subscribe to realtime updates
+  useEffect(() => {
     fetchHistory();
 
     // Subscribe to realtime changes in public.inspection_tool_records
@@ -853,6 +862,9 @@ function App() {
                 loadRecord={loadRecord}
                 deleteRecord={deleteRecord}
                 t={t}
+                historyLoading={historyLoading}
+                historyError={historyError}
+                onRetry={fetchHistory}
               />
             )}
 

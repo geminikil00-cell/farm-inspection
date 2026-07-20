@@ -8,7 +8,10 @@ export const HistoryPanel = ({
   facilities,
   loadRecord,
   deleteRecord,
-  t
+  t,
+  historyLoading,
+  historyError,
+  onRetry
 }) => {
   const [selectedYear, setSelectedYear] = useState('');
   const [selectedQuarter, setSelectedQuarter] = useState('');
@@ -113,7 +116,22 @@ export const HistoryPanel = ({
           </div>
         </div>
 
-        {history.length === 0 ? (
+        {historyLoading ? (
+          <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-500 font-medium">{t.loading || 'Loading records...'}</p>
+          </div>
+        ) : historyError ? (
+          <div className="text-center py-12 bg-red-50 rounded-lg border-2 border-dashed border-red-200">
+            <p className="text-red-500 font-medium mb-4">{t.fetchError || 'Error fetching records:'} {historyError}</p>
+            <button
+              onClick={onRetry}
+              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+            >
+              {t.retry || 'Retry'}
+            </button>
+          </div>
+        ) : history.length === 0 ? (
           <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200 focus-ring" tabIndex="0">
             <History size={48} className="mx-auto text-gray-300 mb-4 animate-pulse" />
             <p className="text-gray-500 font-medium">{t.noHistory}</p>
