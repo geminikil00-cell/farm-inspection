@@ -1,7 +1,8 @@
-import React, { useRef } from 'react';
-import { Calendar, User, FileText, Trash2, Printer, Save, Image as ImageIcon, Plus, ArrowLeftRight, FileDown } from 'lucide-react';
+import React, { useRef, useState, useEffect } from 'react';
+import { Calendar, User, FileText, Trash2, Printer, Save, Image as ImageIcon, Plus, ArrowLeftRight, FileDown, MapPin } from 'lucide-react';
 import { AutoResizeTextarea } from './AutoResizeTextarea';
 import { STATUS_OPTIONS } from '../translations';
+import { getSites, addSite } from '../db';
 
 const getScoreColor = (score) => {
   if (score >= 90) return 'text-green-600';
@@ -76,6 +77,14 @@ export const InspectionForm = ({
               placeholder={t.inspector}
               className="w-full p-2 text-sm border border-gray-300 rounded-md focus-ring outline-none bg-white"
               aria-required="true"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <SiteSelect
+              value={currentData.siteId || ''}
+              onChange={(siteId) => handleHeaderChange('siteId', siteId)}
+              t={t}
             />
           </div>
           
@@ -304,5 +313,95 @@ export const InspectionForm = ({
         </button>
       </div>
     </div>
+  );
+};
+
+const SiteSelect = ({ value, onChange, t }) => {
+  const [sites, setSites] = useState([]);
+  const [showAdd, setShowAdd] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newType, setNewType] = useState('other');
+
+  const loadSites = async () => {
+    const data = await getSites();
+    setSites(data);
+  };
+
+  useEffect(() => { loadSites(); }, []);
+
+  const handleAdd = async () => {
+    if (!newName.trim()) return;
+    const site = await addSite({ name: newName.trim(), type: newType, description: '' });
+    await loadSites();
+    onChange(site.id);
+    setShowAdd(false);
+    setNewName('');
+  };
+
+  return (
+    <>
+      <label className="text-sm font-medium text-gray-600 flex items-center gap-2">
+        <MapPin size={16} />
+        <span>{t.selectSite || 'Site'}</span>
+      </label>
+      {showAdd ? (
+        <div className="flex items-center gap-1">
+          <input
+            type="text"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder={t.enterSiteName || 'Site name'}
+            className="flex-1 p-2 text-sm border border-gray-300 rounded-md focus-ring outline-none bg-white"
+            autoFocus
+            onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+          />
+          <select
+            value={newType}
+            onChange={(e) => setNewType(e.target.value)}
+            className="p-2 text-sm border border-gray-300 rounded-md focus-ring outline-none bg-white"
+          >
+            <option value="pond">{t.siteTypePond || 'Pond'}</option>
+            <option value="processing">{t.siteTypeProcessing || 'Processing Area'}</option>
+            <option value="storage">{t.siteTypeStorage || 'Storage'}</option>
+            <option value="greenhouse">{t.siteTypeGreenhouse || 'Greenhouse'}</option>
+            <option value="warehouse">{t.siteTypeWarehouse || 'Warehouse'}</option>
+            <option value="restArea">{t.siteTypeRestArea || 'Rest Area'}</option>
+            <option value="other">{t.siteTypeOther || 'Other'}</option>
+          </select>
+          <button
+            onClick={handleAdd}
+            className="px-2 py-2 bg-green-600 text-white rounded-md text-xs font-medium hover:bg-green-700 whitespace-nowrap"
+          >
+            {t.addSite || 'Add'}
+          </button>
+          <button
+            onClick={() => setShowAdd(false)}
+            className="px-2 py-2 text-gray-500 hover:text-gray-700"
+          >
+            &times;
+          </button>
+        </div>
+      ) : (
+        <div className="flex items-center gap-1">
+          <select
+            value={value}
+            onChange={(e) => {
+              if (e.target.value === '__add__') {
+                setShowAdd(true);
+              } else {
+                onChange(e.target.value);
+              }
+            }}
+            className="flex-1 p-2 text-sm border border-gray-300 rounded-md focus-ring outline-none bg-white"
+          >
+            <option value="">-- {t.selectSite || 'Select Site'} --</option>
+            {sites.map(site => (
+              <option key={site.id} value={site.id}>{site.name}</option>
+            ))}
+            <option value="__add__" className="text-green-600 font-medium">+ {t.addNewSite || 'Add New Location'}</option>
+          </select>
+        </div>
+      )}
+    </>
   );
 };

@@ -4,7 +4,7 @@ import {
   Wrench, Trash2, Waves, Package, Users, ClipboardList,
   History, BarChart3, ChevronLeft, ChevronRight, Save,
   Printer, Plus, ArrowLeftRight, Trash, Globe, Shield, RefreshCw,
-  Menu, X, FileDown
+  Menu, X, FileDown, MapPin, Sparkles, Building2
 } from 'lucide-react';
 import { supabase } from './supabase';
 import { saveToDB, getFromDB } from './db';
@@ -14,6 +14,9 @@ import { InspectionForm } from './components/InspectionForm';
 import { HistoryPanel } from './components/HistoryPanel';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 import { ComparisonPanel } from './components/ComparisonPanel';
+import { QuickInspectionWizard } from './components/QuickInspectionWizard';
+import { StartAuditDialog } from './components/StartAuditDialog';
+import { UnitAdminPortal, SystemAdminPortal } from './components/AdminPortal';
 
 const INITIAL_ROW = {
   status: '',
@@ -113,6 +116,8 @@ function App() {
   const [historyError, setHistoryError] = useState(null);
   const [historyFull, setHistoryFull] = useState(null);
   const [historyFullLoading, setHistoryFullLoading] = useState(false);
+  const [showQuickWizard, setShowQuickWizard] = useState(false);
+  const [showStartAudit, setShowStartAudit] = useState(false);
 
   // Active translation dictionary with automatic English fallback for un-translated keys
   const t = useMemo(() => {
@@ -160,6 +165,7 @@ function App() {
           inspector: '',
           date: new Date().toISOString().split('T')[0],
           notes: '',
+          siteId: '',
           rows: templateCriteria[key].items.map(item => ({ ...INITIAL_ROW, criteria: item })),
           photos: []
         };
@@ -484,6 +490,7 @@ function App() {
         inspector: '',
         date: new Date().toISOString().split('T')[0],
         notes: '',
+        siteId: '',
         rows: templateCriteria[tabId].items.map(item => ({ ...INITIAL_ROW, criteria: item })),
         photos: []
       }
@@ -558,6 +565,7 @@ function App() {
           inspector: currentRaw.inspector,
           date: currentRaw.date,
           notes: currentRaw.notes,
+          siteId: currentRaw.siteId || '',
           rows: snapshotRows
         },
         score: score,
@@ -623,6 +631,7 @@ function App() {
         inspector: fullRecord.data.inspector || '',
         date: fullRecord.data.date || new Date().toISOString().split('T')[0],
         notes: fullRecord.data.notes || '',
+        siteId: fullRecord.data.siteId || '',
         rows: Array.isArray(fullRecord.data.rows) ? fullRecord.data.rows : defaultRows,
         photos: Array.isArray(fullRecord.photo_urls) ? fullRecord.photo_urls : []
       };
@@ -635,6 +644,48 @@ function App() {
       setViewMode('inspection');
       setViewingRecordId(fullRecord.id);
     }
+  };
+
+  const handleWizardStart = ({ siteId, templateKey, inspectorName }) => {
+    if (!FACILITY_TRANSLATIONS.ar[templateKey]) {
+      const customKey = templateKey.startsWith('custom_') ? templateKey : null;
+      if (!customKey) {
+        alert('Template not found.');
+        return;
+      }
+    }
+    const current = formData[templateKey];
+    if (!current) {
+      const template = FACILITY_TRANSLATIONS.ar[templateKey];
+      const initialRows = template?.items?.map(item => ({ ...INITIAL_ROW, criteria: item })) || [];
+      setFormData(prev => ({
+        ...prev,
+        [templateKey]: {
+          inspector: inspectorName,
+          date: new Date().toISOString().split('T')[0],
+          notes: '',
+          siteId: siteId || '',
+          rows: initialRows,
+          photos: []
+        }
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [templateKey]: {
+          ...prev[templateKey],
+          inspector: inspectorName,
+          siteId: siteId || ''
+        }
+      }));
+    }
+    setActiveTab(templateKey);
+    setViewMode('inspection');
+    setViewingRecordId(null);
+  };
+
+  const handleStartAudit = ({ siteId, templateKey, inspectorName }) => {
+    handleWizardStart({ siteId, templateKey, inspectorName });
   };
 
   const handlePrint = () => {
@@ -690,6 +741,14 @@ function App() {
             </button>
           </div>
           <nav className="p-4 space-y-2">
+            <button
+              onClick={() => setShowStartAudit(true)}
+              className="w-full text-start p-3 rounded-lg flex items-center gap-3 transition-colors focus-ring bg-green-600 text-white shadow-lg font-bold"
+            >
+              <Sparkles size={20} className="flex-shrink-0" />
+              <span className="truncate">{t.newInspection}</span>
+            </button>
+
             <div className="text-xs text-slate-500 font-bold px-2 mb-2">{t.siteInspection}</div>
             
             {Object.keys(FACILITY_TRANSLATIONS[lang] || FACILITY_TRANSLATIONS.ar).map(key => {
@@ -760,6 +819,36 @@ function App() {
               <ArrowLeftRight size={20} className="flex-shrink-0" />
               <span>{t.comparisons}</span>
             </button>
+
+            <div className="my-4 border-t border-slate-700"></div>
+
+            <button
+              onClick={() => {
+                setViewMode('unitAdmin');
+                if (window.innerWidth < 768) setShowSidebar(false);
+              }}
+              className={`w-full text-start p-3 rounded-lg flex items-center gap-3 transition-colors focus-ring ${
+                viewMode === 'unitAdmin' ? 'bg-teal-600 text-white shadow-lg font-bold' : 'hover:bg-slate-800 text-slate-300'
+              }`}
+              aria-current={viewMode === 'unitAdmin' ? 'page' : undefined}
+            >
+              <Building2 size={20} className="flex-shrink-0" />
+              <span>{t.unitAdmin}</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setViewMode('systemAdmin');
+                if (window.innerWidth < 768) setShowSidebar(false);
+              }}
+              className={`w-full text-start p-3 rounded-lg flex items-center gap-3 transition-colors focus-ring ${
+                viewMode === 'systemAdmin' ? 'bg-indigo-600 text-white shadow-lg font-bold' : 'hover:bg-slate-800 text-slate-300'
+              }`}
+              aria-current={viewMode === 'systemAdmin' ? 'page' : undefined}
+            >
+              <Shield size={20} className="flex-shrink-0" />
+              <span>{t.systemAdmin}</span>
+            </button>
           </nav>
           
           <div className="p-4 mt-auto border-t border-slate-800 text-xs text-slate-500 text-center flex flex-col gap-1">
@@ -793,6 +882,10 @@ function App() {
                     ? t.historyHeader
                     : viewMode === 'comparisons'
                     ? t.comparisons
+                    : viewMode === 'unitAdmin'
+                    ? t.unitAdmin
+                    : viewMode === 'systemAdmin'
+                    ? t.systemAdmin
                     : t.analytics}
                 </h2>
               </div>
@@ -831,6 +924,15 @@ function App() {
 
               {viewMode === 'inspection' && (
                 <div className="flex items-center gap-1.5 sm:gap-2">
+
+                  <button
+                    onClick={() => setShowStartAudit(true)}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-white bg-amber-600 hover:bg-amber-700 rounded-lg shadow-sm transition-colors text-xs sm:text-sm font-medium focus-ring"
+                    title={t.newInspection}
+                  >
+                    <Sparkles size={16} />
+                    <span className="hidden sm:inline">{t.newInspection}</span>
+                  </button>
 
                   <div className="px-2.5 py-1 sm:px-4 sm:py-1.5 bg-white rounded-lg border border-gray-200 flex items-center gap-1.5 sm:gap-3 shadow-sm">
                     <span className="text-[10px] sm:text-xs text-gray-500 font-bold">{t.score}</span>
@@ -950,9 +1052,33 @@ function App() {
                 lang={lang}
               />
             ))}
+
+            {viewMode === 'unitAdmin' && (
+              <UnitAdminPortal t={t} isRtl={isRtl} lang={lang} />
+            )}
+
+            {viewMode === 'systemAdmin' && (
+              <SystemAdminPortal t={t} isRtl={isRtl} lang={lang} />
+            )}
           </main>
         </div>
       </div>
+
+      <QuickInspectionWizard
+        isOpen={showQuickWizard}
+        onClose={() => setShowQuickWizard(false)}
+        onStart={handleWizardStart}
+        t={t}
+        lang={lang}
+      />
+
+      <StartAuditDialog
+        isOpen={showStartAudit}
+        onClose={() => setShowStartAudit(false)}
+        onStart={handleStartAudit}
+        t={t}
+        lang={lang}
+      />
     </div>
   );
 }
