@@ -3,19 +3,15 @@ import React, { useEffect, useRef } from 'react';
 export const DialogOverlay = ({ isOpen, onClose, title, children }) => {
   const overlayRef = useRef(null);
   const closeButtonRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (!isOpen) return;
 
-    // Focus the close button when modal opens
-    if (closeButtonRef.current) {
-      closeButtonRef.current.focus();
-    }
-
-    // Trapping focus & escape key listener
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (e.key === 'Tab') {
@@ -44,14 +40,13 @@ export const DialogOverlay = ({ isOpen, onClose, title, children }) => {
 
     window.addEventListener('keydown', handleKeyDown);
     
-    // Lock background scrolling when modal is open
     document.body.style.overflow = 'hidden';
     
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
