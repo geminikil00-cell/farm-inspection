@@ -1,5 +1,5 @@
 const dbName = 'FarmInspectionDB';
-const dbVersion = 2;
+const dbVersion = 3;
 
 const openDB = () => {
   return new Promise((resolve, reject) => {
@@ -94,9 +94,20 @@ export const getSites = async () => {
   return await getAllFromDB('sites');
 };
 
+const putToDB = async (storeName, value) => {
+  const dbInstance = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = dbInstance.transaction(storeName, 'readwrite');
+    const store = transaction.objectStore(storeName);
+    const request = store.put(value);
+    request.onsuccess = () => resolve();
+    request.onerror = (event) => reject(event.target.error);
+  });
+};
+
 export const addSite = async (site) => {
   const newSite = { ...site, id: generateId(), createdAt: new Date().toISOString() };
-  await saveToDB('sites', newSite.id, newSite);
+  await putToDB('sites', newSite);
   return newSite;
 };
 
@@ -128,7 +139,7 @@ export const getTemplates = async () => {
 
 export const addTemplate = async (template) => {
   const newTemplate = { ...template, id: generateId(), createdAt: new Date().toISOString() };
-  await saveToDB('templates', newTemplate.id, newTemplate);
+  await putToDB('templates', newTemplate);
   return newTemplate;
 };
 
