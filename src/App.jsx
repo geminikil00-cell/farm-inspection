@@ -4,7 +4,7 @@ import {
   Wrench, Trash2, Waves, Package, Users, ClipboardList,
   History, BarChart3, ChevronLeft, ChevronRight, Save,
   Printer, Plus, ArrowLeftRight, Trash, Globe, Shield, RefreshCw,
-  Menu, X, FileDown, MapPin, Sparkles, Building2
+  Menu, X, FileDown, MapPin, Sparkles, Building2, ClipboardEdit, FileText
 } from 'lucide-react';
 import { supabase } from './supabase';
 import { saveToDB, getFromDB } from './db';
@@ -17,6 +17,7 @@ import { ComparisonPanel } from './components/ComparisonPanel';
 import { QuickInspectionWizard } from './components/QuickInspectionWizard';
 import { StartAuditDialog } from './components/StartAuditDialog';
 import { UnitAdminPortal, SystemAdminPortal } from './components/AdminPortal';
+import { TemplateBuilder } from './components/TemplateBuilder';
 
 const INITIAL_ROW = {
   status: '',
@@ -118,6 +119,7 @@ function App() {
   const [historyFullLoading, setHistoryFullLoading] = useState(false);
   const [showQuickWizard, setShowQuickWizard] = useState(false);
   const [showStartAudit, setShowStartAudit] = useState(false);
+  const [customTemplates, setCustomTemplates] = useState([]);
 
   // Active translation dictionary with automatic English fallback for un-translated keys
   const t = useMemo(() => {
@@ -156,6 +158,26 @@ function App() {
   useEffect(() => {
     const loadDrafts = async () => {
       const initialData = {};
+
+      // Fetch custom templates from Supabase and merge into FACILITY_TRANSLATIONS
+      try {
+        const { data: tmpls } = await supabase
+          .from('inspection_templates')
+          .select('*')
+          .order('updated_at', { ascending: false });
+        if (tmpls && tmpls.length > 0) {
+          setCustomTemplates(tmpls);
+          tmpls.forEach(tmpl => {
+            const key = 'custom_' + tmpl.id.replace(/-/g, '_');
+            const criteriaTexts = (tmpl.items || []).map(it => it.text);
+            const entry = { title: tmpl.name, items: criteriaTexts, _custom: true, _templateId: tmpl.id };
+            FACILITY_TRANSLATIONS.ar[key] = entry;
+            FACILITY_TRANSLATIONS.en[key] = entry;
+          });
+        }
+      } catch (e) {
+        console.error('Failed to fetch custom templates:', e);
+      }
       
       // Use Arabic template keys dynamically mapped to chosen criteria
       const templateCriteria = FACILITY_TRANSLATIONS.ar;
@@ -599,7 +621,8 @@ function App() {
 
   // Load record from history back to active form editor
   const loadRecord = async (record) => {
-    if (!FACILITY_TRANSLATIONS.ar[record.facility_id]) {
+    const isCustom = record.facility_id && record.facility_id.startsWith('custom_');
+    if (!isCustom && !FACILITY_TRANSLATIONS.ar[record.facility_id]) {
       alert("Error: Unknown facility type.");
       return;
     }
@@ -625,7 +648,9 @@ function App() {
       }
 
       const template = FACILITY_TRANSLATIONS.ar[fullRecord.facility_id];
-      const defaultRows = template.items.map(item => ({ ...INITIAL_ROW, criteria: item }));
+      const defaultRows = template
+        ? template.items.map(item => ({ ...INITIAL_ROW, criteria: item }))
+        : (Array.isArray(fullRecord.data.rows) ? fullRecord.data.rows.map(r => ({ ...INITIAL_ROW, criteria: r.criteria || '' })) : []);
 
       const loadedData = {
         inspector: fullRecord.data.inspector || '',
@@ -751,7 +776,9 @@ function App() {
 
             <div className="text-xs text-slate-500 font-bold px-2 mb-2">{t.siteInspection}</div>
             
-            {Object.keys(FACILITY_TRANSLATIONS[lang] || FACILITY_TRANSLATIONS.ar).map(key => {
+            {Object.keys(FACILITY_TRANSLATIONS[lang] || FACILITY_TRANSLATIONS.ar)
+              .filter(key => !key.startsWith('custom_'))
+              .map(key => {
               const Icon = FACILITY_ICONS[key] || Sprout;
               const title = FACILITY_TRANSLATIONS[lang]?.[key]?.title || FACILITY_TRANSLATIONS.ar[key].title;
               return (
@@ -775,6 +802,36 @@ function App() {
                 </button>
               );
             })}
+
+            {customTemplates.length > 0 && (
+              <>
+                <div className="text-xs text-slate-500 font-bold px-2 pt-3 mb-2">{t.customTemplates}</div>
+                {customTemplates.map(tmpl => {
+                  const key = 'custom_' + tmpl.id.replace(/-/g, '_');
+                  const title = tmpl.name;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => {
+                        setActiveTab(key);
+                        setViewMode('inspection');
+                        setViewingRecordId(null);
+                        if (window.innerWidth < 768) setShowSidebar(false);
+                      }}
+                      className={`w-full text-start p-3 rounded-lg flex items-center gap-3 transition-colors focus-ring ${
+                        activeTab === key && viewMode === 'inspection'
+                          ? 'bg-green-600 text-white shadow-lg font-bold'
+                          : 'hover:bg-slate-800 text-slate-300'
+                      }`}
+                      aria-current={activeTab === key && viewMode === 'inspection' ? 'page' : undefined}
+                    >
+                      <FileText className="w-5 h-5 flex-shrink-0" />
+                      <span className="truncate">{title}</span>
+                    </button>
+                  );
+                })}
+              </>
+            )}
 
             <div className="my-4 border-t border-slate-700"></div>
             
@@ -849,6 +906,20 @@ function App() {
               <Shield size={20} className="flex-shrink-0" />
               <span>{t.systemAdmin}</span>
             </button>
+
+            <button
+              onClick={() => {
+                setViewMode('builder');
+                if (window.innerWidth < 768) setShowSidebar(false);
+              }}
+              className={`w-full text-start p-3 rounded-lg flex items-center gap-3 transition-colors focus-ring ${
+                viewMode === 'builder' ? 'bg-amber-600 text-white shadow-lg font-bold' : 'hover:bg-slate-800 text-slate-300'
+              }`}
+              aria-current={viewMode === 'builder' ? 'page' : undefined}
+            >
+              <ClipboardEdit size={20} className="flex-shrink-0" />
+              <span>{t.templateBuilder}</span>
+            </button>
           </nav>
           
           <div className="p-4 mt-auto border-t border-slate-800 text-xs text-slate-500 text-center flex flex-col gap-1">
@@ -886,6 +957,8 @@ function App() {
                     ? t.unitAdmin
                     : viewMode === 'systemAdmin'
                     ? t.systemAdmin
+                    : viewMode === 'builder'
+                    ? t.templateBuilder
                     : t.analytics}
                 </h2>
               </div>
@@ -1059,6 +1132,10 @@ function App() {
 
             {viewMode === 'systemAdmin' && (
               <SystemAdminPortal t={t} isRtl={isRtl} lang={lang} />
+            )}
+
+            {viewMode === 'builder' && (
+              <TemplateBuilder t={t} lang={lang} />
             )}
           </main>
         </div>

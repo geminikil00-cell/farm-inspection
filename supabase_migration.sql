@@ -68,3 +68,26 @@ CREATE POLICY "anon_delete_photos" ON storage.objects
 -- ALTER TABLE inspection_tool_records ADD COLUMN IF NOT EXISTS inspection_year integer;
 -- ALTER TABLE inspection_tool_records ADD COLUMN IF NOT EXISTS inspection_quarter text;
 
+-- ============================================================
+-- TEMPLATE BUILDER TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS inspection_templates (
+  id         uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  name       text NOT NULL,
+  type       text DEFAULT 'custom',
+  items      jsonb NOT NULL DEFAULT '[]',
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  user_id    uuid DEFAULT auth.uid()
+);
+
+ALTER TABLE inspection_templates ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "anon_select_templates" ON inspection_templates FOR SELECT USING (true);
+CREATE POLICY "anon_insert_templates" ON inspection_templates FOR INSERT WITH CHECK (true);
+CREATE POLICY "anon_update_templates" ON inspection_templates FOR UPDATE USING (true);
+CREATE POLICY "anon_delete_templates" ON inspection_templates FOR DELETE USING (true);
+
+CREATE INDEX IF NOT EXISTS idx_templates_updated ON inspection_templates (updated_at DESC);
+
+ALTER PUBLICATION supabase_realtime ADD TABLE inspection_templates;

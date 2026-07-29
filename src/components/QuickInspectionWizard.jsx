@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   MapPin, ClipboardList, User, Check, ChevronRight, ChevronLeft,
-  Plus, Sparkles
+  Plus, Sparkles, FileText
 } from 'lucide-react';
 import { DialogOverlay } from './DialogOverlay';
 import { getSites, addSite } from '../db';
 import { FACILITY_TRANSLATIONS } from '../translations/criteria';
+import { supabase } from '../supabase';
 
 const SITE_TYPES = [
   { value: 'pond', labelKey: 'siteTypePond' },
@@ -27,12 +28,9 @@ export const QuickInspectionWizard = ({ isOpen, onClose, onStart, t, lang }) => 
   const [showNewSiteForm, setShowNewSiteForm] = useState(false);
   const [newSiteName, setNewSiteName] = useState('');
   const [newSiteType, setNewSiteType] = useState('other');
-  const [showNewTemplateForm, setShowNewTemplateForm] = useState(false);
-  const [newTemplateName, setNewTemplateName] = useState('');
-  const [newTemplateCriteria, setNewTemplateCriteria] = useState('');
-  const [newTemplateFacility, setNewTemplateFacility] = useState('');
+  const [supabaseTemplates, setSupabaseTemplates] = useState([]);
 
-  const facilityNames = Object.keys(FACILITY_TRANSLATIONS.ar);
+  const builtInKeys = Object.keys(FACILITY_TRANSLATIONS.ar).filter(k => !k.startsWith('custom_'));
 
   useEffect(() => {
     if (isOpen) {
@@ -42,14 +40,24 @@ export const QuickInspectionWizard = ({ isOpen, onClose, onStart, t, lang }) => 
       setInspectorName('');
       setShowNewSiteForm(false);
       setNewSiteName('');
-      setShowNewTemplateForm(false);
       loadSites();
+      loadCustomTemplates();
     }
   }, [isOpen]);
 
   const loadSites = async () => {
     const data = await getSites();
     setSites(data);
+  };
+
+  const loadCustomTemplates = async () => {
+    try {
+      const { data } = await supabase.from('inspection_templates').select('*').order('updated_at', { ascending: false });
+      setSupabaseTemplates(data || []);
+    } catch (e) {
+      console.error('Failed to fetch custom templates:', e);
+      setSupabaseTemplates([]);
+    }
   };
 
   const handleAddSite = async () => {
@@ -59,22 +67,6 @@ export const QuickInspectionWizard = ({ isOpen, onClose, onStart, t, lang }) => 
     setSelectedSiteId(site.id);
     setShowNewSiteForm(false);
     setNewSiteName('');
-  };
-
-  const handleAddTemplate = () => {
-    if (!newTemplateName.trim() || !newTemplateCriteria.trim()) return;
-    const criteriaItems = newTemplateCriteria.split('\n').filter(c => c.trim());
-    const templateKey = 'custom_' + Date.now();
-    if (!FACILITY_TRANSLATIONS.ar[templateKey]) {
-      FACILITY_TRANSLATIONS.ar[templateKey] = { title: newTemplateName.trim(), items: criteriaItems };
-      if (!FACILITY_TRANSLATIONS.en[templateKey]) {
-        FACILITY_TRANSLATIONS.en[templateKey] = { title: newTemplateName.trim(), items: criteriaItems };
-      }
-    }
-    setSelectedTemplateKey(templateKey);
-    setShowNewTemplateForm(false);
-    setNewTemplateName('');
-    setNewTemplateCriteria('');
   };
 
   const canGoNext = () => {
@@ -201,67 +193,52 @@ export const QuickInspectionWizard = ({ isOpen, onClose, onStart, t, lang }) => 
         {/* Step 2: Template */}
         {step === 2 && (
           <div className="space-y-4">
-            {showNewTemplateForm ? (
-              <div className="space-y-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <h4 className="font-medium text-gray-700 flex items-center gap-2"><Plus size={16} /> {t.createTemplate}</h4>
-                <input
-                  type="text" value={newTemplateName} onChange={(e) => setNewTemplateName(e.target.value)}
-                  placeholder={t.enterTemplateName}
-                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm"
-                />
-                <select
-                  value={newTemplateFacility} onChange={(e) => setNewTemplateFacility(e.target.value)}
-                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm bg-white"
-                >
-                  <option value="">{t.selectFacility}</option>
-                  {facilityNames.map(key => (
-                    <option key={key} value={key}>{FACILITY_TRANSLATIONS[lang]?.[key]?.title || FACILITY_TRANSLATIONS.ar[key].title}</option>
-                  ))}
-                </select>
-                <textarea
-                  value={newTemplateCriteria} onChange={(e) => setNewTemplateCriteria(e.target.value)}
-                  placeholder={t.templateCriteria}
-                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm"
-                  rows={5}
-                />
-                <div className="flex gap-2">
-                  <button onClick={handleAddTemplate} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700">
-                    {t.createTemplate}
-                  </button>
-                  <button onClick={() => setShowNewTemplateForm(false)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50">
-                    {t.cancel}
-                  </button>
-                </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t.selectTemplate}</label>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {builtInKeys.map(key => {
+                  const title = FACILITY_TRANSLATIONS[lang]?.[key]?.title || FACILITY_TRANSLATIONS.ar[key].title;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setSelectedTemplateKey(key)}
+                      className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                        selectedTemplateKey === key
+                          ? 'border-green-500 bg-green-50 text-green-800'
+                          : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                      }`}
+                    >
+                      <span className="font-medium">{title}</span>
+                      <span className="text-xs text-gray-400 ml-2">
+                        ({(FACILITY_TRANSLATIONS.ar[key]?.items || []).length} items)
+                      </span>
+                    </button>
+                  );
+                })}
+                {supabaseTemplates.map(tmpl => {
+                  const key = 'custom_' + tmpl.id.replace(/-/g, '_');
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setSelectedTemplateKey(key)}
+                      className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                        selectedTemplateKey === key
+                          ? 'border-green-500 bg-green-50 text-green-800'
+                          : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                      }`}
+                    >
+                      <FileText size={14} className="inline mr-1 text-amber-500" />
+                      <span className="font-medium">{tmpl.name}</span>
+                      <span className="text-xs text-gray-400 ml-2">
+                        ({(tmpl.items || []).length} items)
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
-            ) : (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.selectTemplate}</label>
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {facilityNames.map(key => {
-                      const title = FACILITY_TRANSLATIONS[lang]?.[key]?.title || FACILITY_TRANSLATIONS.ar[key].title;
-                      return (
-                        <button
-                          key={key}
-                          type="button"
-                          onClick={() => setSelectedTemplateKey(key)}
-                          className={`w-full text-left p-3 rounded-lg border transition-colors ${
-                            selectedTemplateKey === key
-                              ? 'border-green-500 bg-green-50 text-green-800'
-                              : 'border-gray-200 hover:border-gray-300 text-gray-700'
-                          }`}
-                        >
-                          <span className="font-medium">{title}</span>
-                          <span className="text-xs text-gray-400 ml-2">
-                            ({(FACILITY_TRANSLATIONS.ar[key]?.items || []).length} items)
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </>
-            )}
+            </div>
           </div>
         )}
 

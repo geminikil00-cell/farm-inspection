@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import {
-  MapPin, ClipboardList, User, Check, Plus, X, Sparkles
+  MapPin, ClipboardList, User, Check, Plus, X, Sparkles, FileText
 } from 'lucide-react';
 import { DialogOverlay } from './DialogOverlay';
 import { getSites, addSite } from '../db';
 import { FACILITY_TRANSLATIONS } from '../translations/criteria';
+import { supabase } from '../supabase';
 
 const SITE_TYPES = [
   { value: 'pond', labelKey: 'siteTypePond' },
@@ -25,8 +26,9 @@ export const StartAuditDialog = ({ isOpen, onClose, onStart, t, lang }) => {
   const [showNewSiteForm, setShowNewSiteForm] = useState(false);
   const [newSiteName, setNewSiteName] = useState('');
   const [newSiteType, setNewSiteType] = useState('other');
+  const [supabaseTemplates, setSupabaseTemplates] = useState([]);
 
-  const facilityNames = Object.keys(FACILITY_TRANSLATIONS.ar);
+  const builtInKeys = Object.keys(FACILITY_TRANSLATIONS.ar).filter(k => !k.startsWith('custom_'));
 
   useEffect(() => {
     if (isOpen) {
@@ -36,12 +38,23 @@ export const StartAuditDialog = ({ isOpen, onClose, onStart, t, lang }) => {
       setShowNewSiteForm(false);
       setNewSiteName('');
       loadSites();
+      loadCustomTemplates();
     }
   }, [isOpen]);
 
   const loadSites = async () => {
     const data = await getSites();
     setSites(data);
+  };
+
+  const loadCustomTemplates = async () => {
+    try {
+      const { data } = await supabase.from('inspection_templates').select('*').order('updated_at', { ascending: false });
+      setSupabaseTemplates(data || []);
+    } catch (e) {
+      console.error('Failed to fetch custom templates:', e);
+      setSupabaseTemplates([]);
+    }
   };
 
   const handleAddSite = async () => {
@@ -134,12 +147,22 @@ export const StartAuditDialog = ({ isOpen, onClose, onStart, t, lang }) => {
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm bg-white"
           >
             <option value="">-- {t.selectTemplate} --</option>
-            {facilityNames.map(key => {
+            {builtInKeys.map(key => {
               const title = FACILITY_TRANSLATIONS[lang]?.[key]?.title || FACILITY_TRANSLATIONS.ar[key].title;
               return (
                 <option key={key} value={key}>{title}</option>
               );
             })}
+            {supabaseTemplates.length > 0 && (
+              <optgroup label={t.customTemplates}>
+                {supabaseTemplates.map(tmpl => {
+                  const key = 'custom_' + tmpl.id.replace(/-/g, '_');
+                  return (
+                    <option key={key} value={key}>{tmpl.name}</option>
+                  );
+                })}
+              </optgroup>
+            )}
           </select>
         </div>
 
