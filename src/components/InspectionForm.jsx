@@ -27,7 +27,8 @@ export const InspectionForm = ({
   handlePrint,
   handleDownloadPDF,
   t,
-  isRtl
+  isRtl,
+  activeColumns
 }) => {
   const fileInputRef = useRef(null);
 
@@ -137,83 +138,150 @@ export const InspectionForm = ({
           <table className="w-full text-start text-sm border-collapse" role="table">
             <thead className="bg-gray-50 text-gray-700 font-bold border-b-2 border-gray-200">
               <tr role="row">
-                <th className="p-2.5 sm:p-3 border text-start w-48 sm:w-52 min-w-[130px] print-tight text-xs sm:text-sm">{t.criteria}</th>
-                {activeTab === 'lakes' ? (
-                  <>
-                    {[1, 2, 3, 4, 5, 6].map(i => (
-                      <th key={i} className="p-2 sm:p-3 border text-center min-w-[85px] sm:min-w-[95px] print-tight text-xs sm:text-sm">
-                        {t.pond} {i}
-                      </th>
-                    ))}
-                  </>
+                {activeColumns && activeColumns.length > 0 ? (
+                  activeColumns.map(col => (
+                    <th key={col.id} className={`p-2.5 sm:p-3 border print-tight text-xs sm:text-sm ${col.type === 'label' ? 'text-start w-48 sm:w-52 min-w-[130px]' : 'text-center min-w-[85px] sm:min-w-[95px]'}`}>
+                      {col.header}
+                    </th>
+                  ))
                 ) : (
-                  <th className="p-2 sm:p-3 border text-center w-36 sm:w-40 min-w-[110px] text-xs sm:text-sm">{t.status}</th>
+                  <>
+                    <th className="p-2.5 sm:p-3 border text-start w-48 sm:w-52 min-w-[130px] print-tight text-xs sm:text-sm">{t.criteria}</th>
+                    {activeTab === 'lakes' ? (
+                      <>
+                        {[1, 2, 3, 4, 5, 6].map(i => (
+                          <th key={i} className="p-2 sm:p-3 border text-center min-w-[85px] sm:min-w-[95px] print-tight text-xs sm:text-sm">
+                            {t.pond} {i}
+                          </th>
+                        ))}
+                      </>
+                    ) : (
+                      <th className="p-2 sm:p-3 border text-center w-36 sm:w-40 min-w-[110px] text-xs sm:text-sm">{t.status}</th>
+                    )}
+                    <th className="p-2 sm:p-3 border text-start min-w-[120px] print-tight text-xs sm:text-sm">{t.action}</th>
+                    <th className="p-2 sm:p-3 border text-start w-28 sm:w-32 min-w-[90px] print-tight text-xs sm:text-sm">{t.responsible}</th>
+                  </>
                 )}
-                <th className="p-2 sm:p-3 border text-start min-w-[120px] print-tight text-xs sm:text-sm">{t.action}</th>
-                <th className="p-2 sm:p-3 border text-start w-28 sm:w-32 min-w-[90px] print-tight text-xs sm:text-sm">{t.responsible}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {currentRows.map((row, index) => (
                 <tr key={index} className="hover:bg-gray-50 transition-colors" role="row">
-                  <td className="p-2 sm:p-3 border font-medium text-gray-800 bg-white align-top whitespace-pre-wrap print-tight text-xs sm:text-sm" role="cell">
-                    {row.criteria}
-                  </td>
-                  {activeTab === 'lakes' ? (
-                    [1, 2, 3, 4, 5, 6].map(n => (
-                      <td key={n} className="p-1 border bg-white align-top" role="cell">
-                        <select
-                          value={row[`status_${n}`] || ''}
-                          onChange={(e) => handleRowChange(index, `status_${n}`, e.target.value)}
-                          className={`w-full p-1 rounded outline-none border border-gray-200 focus-ring text-center font-medium text-[10px] sm:text-xs h-[38px] leading-tight ${
-                            statusOpts.find(o => o.value === row[`status_${n}`])?.color || 'bg-white'
-                          }`}
-                          aria-label={`${t.pond} ${n} - ${row.criteria}`}
-                        >
-                          {statusOpts.map(opt => (
-                            <option key={opt.value} value={opt.value}>
-                              {opt.label}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                    ))
+                  {activeColumns && activeColumns.length > 0 ? (
+                    activeColumns.map(col => {
+                      if (col.type === 'label') {
+                        return (
+                          <td key={col.id} className="p-2 sm:p-3 border font-medium text-gray-800 bg-white align-top whitespace-pre-wrap print-tight text-xs sm:text-sm">
+                            {row.criteria}
+                          </td>
+                        );
+                      }
+                      if (col.type === 'select' && col.options) {
+                        return (
+                          <td key={col.id} className="p-1 border bg-white align-top">
+                            <select
+                              value={row[col.id] || ''}
+                              onChange={(e) => handleRowChange(index, col.id, e.target.value)}
+                              className={`w-full p-1.5 rounded outline-none border border-gray-200 focus-ring text-center font-medium text-xs sm:text-sm h-[38px] ${
+                                col.options.find(o => o.value === row[col.id])?.color || 'bg-white'
+                              }`}
+                              aria-label={`${col.header} - ${row.criteria}`}
+                            >
+                              {col.options.map(opt => (
+                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                              ))}
+                            </select>
+                          </td>
+                        );
+                      }
+                      if (col.type === 'textarea') {
+                        return (
+                          <td key={col.id} className="p-1 border bg-white align-top">
+                            <AutoResizeTextarea
+                              value={row[col.id] || ''}
+                              onChange={(e) => handleRowChange(index, col.id, e.target.value)}
+                              placeholder={col.header}
+                              className="w-full p-1.5 text-gray-700 outline-none focus:bg-gray-50 border border-transparent focus:border-gray-300 rounded text-xs sm:text-sm"
+                              aria-label={`${col.header} for ${row.criteria}`}
+                            />
+                          </td>
+                        );
+                      }
+                      return (
+                        <td key={col.id} className="p-1 border bg-white align-top">
+                          <input
+                            type="text"
+                            value={row[col.id] || ''}
+                            onChange={(e) => handleRowChange(index, col.id, e.target.value)}
+                            placeholder={col.header}
+                            className="w-full p-1.5 text-gray-700 outline-none focus:bg-gray-50 border border-transparent focus:border-gray-300 rounded text-xs sm:text-sm"
+                            aria-label={`${col.header} for ${row.criteria}`}
+                          />
+                        </td>
+                      );
+                    })
                   ) : (
-                    <td className="p-1 border bg-white align-top" role="cell">
-                      <select
-                        value={row.status || ''}
-                        onChange={(e) => handleRowChange(index, 'status', e.target.value)}
-                        className={`w-full p-1.5 rounded outline-none border border-gray-200 focus-ring text-center font-medium text-xs sm:text-sm h-[38px] ${
-                          statusOpts.find(o => o.value === row.status)?.color || 'bg-white'
-                        }`}
-                        aria-label={`${t.status} - ${row.criteria}`}
-                      >
-                        {statusOpts.map(opt => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
+                    <>
+                      <td className="p-2 sm:p-3 border font-medium text-gray-800 bg-white align-top whitespace-pre-wrap print-tight text-xs sm:text-sm" role="cell">
+                        {row.criteria}
+                      </td>
+                      {activeTab === 'lakes' ? (
+                        [1, 2, 3, 4, 5, 6].map(n => (
+                          <td key={n} className="p-1 border bg-white align-top" role="cell">
+                            <select
+                              value={row[`status_${n}`] || ''}
+                              onChange={(e) => handleRowChange(index, `status_${n}`, e.target.value)}
+                              className={`w-full p-1 rounded outline-none border border-gray-200 focus-ring text-center font-medium text-[10px] sm:text-xs h-[38px] leading-tight ${
+                                statusOpts.find(o => o.value === row[`status_${n}`])?.color || 'bg-white'
+                              }`}
+                              aria-label={`${t.pond} ${n} - ${row.criteria}`}
+                            >
+                              {statusOpts.map(opt => (
+                                <option key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                        ))
+                      ) : (
+                        <td className="p-1 border bg-white align-top" role="cell">
+                          <select
+                            value={row.status || ''}
+                            onChange={(e) => handleRowChange(index, 'status', e.target.value)}
+                            className={`w-full p-1.5 rounded outline-none border border-gray-200 focus-ring text-center font-medium text-xs sm:text-sm h-[38px] ${
+                              statusOpts.find(o => o.value === row.status)?.color || 'bg-white'
+                            }`}
+                            aria-label={`${t.status} - ${row.criteria}`}
+                          >
+                            {statusOpts.map(opt => (
+                              <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                      )}
+                      <td className="p-1 border bg-white align-top" role="cell">
+                        <AutoResizeTextarea
+                          value={row.action || ''}
+                          onChange={(e) => handleRowChange(index, 'action', e.target.value)}
+                          placeholder={t.action}
+                          className="w-full p-1.5 text-gray-700 outline-none focus:bg-gray-50 border border-transparent focus:border-gray-300 rounded text-xs sm:text-sm"
+                          aria-label={`${t.action} for ${row.criteria}`}
+                        />
+                      </td>
+                      <td className="p-1 border bg-white align-top" role="cell">
+                        <AutoResizeTextarea
+                          value={row.responsible || ''}
+                          onChange={(e) => handleRowChange(index, 'responsible', e.target.value)}
+                          placeholder={t.responsible}
+                          className="w-full p-1.5 text-gray-700 outline-none focus:bg-gray-50 border border-transparent focus:border-gray-300 rounded text-xs sm:text-sm"
+                          aria-label={`${t.responsible} for ${row.criteria}`}
+                        />
+                      </td>
+                    </>
                   )}
-                  <td className="p-1 border bg-white align-top" role="cell">
-                    <AutoResizeTextarea
-                      value={row.action || ''}
-                      onChange={(e) => handleRowChange(index, 'action', e.target.value)}
-                      placeholder={t.action}
-                      className="w-full p-1.5 text-gray-700 outline-none focus:bg-gray-50 border border-transparent focus:border-gray-300 rounded text-xs sm:text-sm"
-                      aria-label={`${t.action} for ${row.criteria}`}
-                    />
-                  </td>
-                  <td className="p-1 border bg-white align-top" role="cell">
-                    <AutoResizeTextarea
-                      value={row.responsible || ''}
-                      onChange={(e) => handleRowChange(index, 'responsible', e.target.value)}
-                      placeholder={t.responsible}
-                      className="w-full p-1.5 text-gray-700 outline-none focus:bg-gray-50 border border-transparent focus:border-gray-300 rounded text-xs sm:text-sm"
-                      aria-label={`${t.responsible} for ${row.criteria}`}
-                    />
-                  </td>
                 </tr>
               ))}
             </tbody>

@@ -71,10 +71,19 @@ CREATE POLICY "anon_delete_photos" ON storage.objects
 -- ============================================================
 -- TEMPLATE BUILDER TABLE
 -- ============================================================
+-- JSONB schema reference:
+--   columns: [
+--     { id: "criteria", header: "المعيار", type: "label" },
+--     { id: "col_1",    header: "الحالة",  type: "select", options: [{ value, label, color, score }] },
+--     { id: "col_2",    header: "الإجراء", type: "textarea" },
+--     { id: "col_3",    header: "المسؤول", type: "textarea" }
+--   ]
+--   items: [{ id: "row_1", text: "نظافة المحيط", order: 0 }, ...]
 CREATE TABLE IF NOT EXISTS inspection_templates (
   id         uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   name       text NOT NULL,
   type       text DEFAULT 'custom',
+  columns    jsonb NOT NULL DEFAULT '[]',
   items      jsonb NOT NULL DEFAULT '[]',
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now(),

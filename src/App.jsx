@@ -4,7 +4,7 @@ import {
   Wrench, Trash2, Waves, Package, Users, ClipboardList,
   History, BarChart3, ChevronLeft, ChevronRight, Save,
   Printer, Plus, ArrowLeftRight, Trash, Globe, Shield, RefreshCw,
-  Menu, X, FileDown, MapPin, Sparkles, Building2, ClipboardEdit, FileText
+  Menu, X, FileDown, MapPin, Building2, ClipboardEdit, FileText
 } from 'lucide-react';
 import { supabase } from './supabase';
 import { saveToDB, getFromDB } from './db';
@@ -14,8 +14,6 @@ import { InspectionForm } from './components/InspectionForm';
 import { HistoryPanel } from './components/HistoryPanel';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 import { ComparisonPanel } from './components/ComparisonPanel';
-import { QuickInspectionWizard } from './components/QuickInspectionWizard';
-import { StartAuditDialog } from './components/StartAuditDialog';
 import { UnitAdminPortal, SystemAdminPortal } from './components/AdminPortal';
 import { TemplateBuilder } from './components/TemplateBuilder';
 
@@ -71,33 +69,47 @@ const getQuarterAndYear = (dateStr) => {
 };
 
 // Simple helper to calculate inspector score
-const calculateScore = (rows) => {
+const calculateScore = (rows, columns) => {
   if (!Array.isArray(rows)) return 0;
   let totalScore = 0;
   let count = 0;
-  
-  // Statically check mapping to original values
-  const scoreMapping = {
-    'ممتاز': 100,
-    'جيد جداً': 80,
-    'جيد': 60,
-    'مقبول': 40,
-    'سيء': 0
-  };
 
-  rows.forEach(row => {
-    if (row.status && scoreMapping[row.status] !== undefined) {
-      totalScore += scoreMapping[row.status];
-      count++;
-    }
-    for (let i = 1; i <= 6; i++) {
-      const key = `status_${i}`;
-      if (row[key] && scoreMapping[row[key]] !== undefined) {
-        totalScore += scoreMapping[row[key]];
+  if (columns && columns.length > 0) {
+    columns.forEach(col => {
+      if (col.type === 'select' && col.options) {
+        const scoreMap = {};
+        col.options.forEach(opt => { if (opt.score != null) scoreMap[opt.value] = opt.score; });
+        rows.forEach(row => {
+          const val = row[col.id];
+          if (val && scoreMap[val] !== undefined) {
+            totalScore += scoreMap[val];
+            count++;
+          }
+        });
+      }
+    });
+  } else {
+    const scoreMapping = {
+      'ممتاز': 100,
+      'جيد جداً': 80,
+      'جيد': 60,
+      'مقبول': 40,
+      'سيء': 0
+    };
+    rows.forEach(row => {
+      if (row.status && scoreMapping[row.status] !== undefined) {
+        totalScore += scoreMapping[row.status];
         count++;
       }
-    }
-  });
+      for (let i = 1; i <= 6; i++) {
+        const key = `status_${i}`;
+        if (row[key] && scoreMapping[row[key]] !== undefined) {
+          totalScore += scoreMapping[row[key]];
+          count++;
+        }
+      }
+    });
+  }
   if (count === 0) return 0;
   return Math.round(totalScore / count);
 };
@@ -117,8 +129,6 @@ function App() {
   const [historyError, setHistoryError] = useState(null);
   const [historyFull, setHistoryFull] = useState(null);
   const [historyFullLoading, setHistoryFullLoading] = useState(false);
-  const [showQuickWizard, setShowQuickWizard] = useState(false);
-  const [showStartAudit, setShowStartAudit] = useState(false);
   const [customTemplates, setCustomTemplates] = useState([]);
 
   // Active translation dictionary with automatic English fallback for un-translated keys
@@ -170,7 +180,7 @@ function App() {
           tmpls.forEach(tmpl => {
             const key = 'custom_' + tmpl.id.replace(/-/g, '_');
             const criteriaTexts = (tmpl.items || []).map(it => it.text);
-            const entry = { title: tmpl.name, items: criteriaTexts, _custom: true, _templateId: tmpl.id };
+            const entry = { title: tmpl.name, items: criteriaTexts, _custom: true, _templateId: tmpl.id, _columns: tmpl.columns || null };
             FACILITY_TRANSLATIONS.ar[key] = entry;
             FACILITY_TRANSLATIONS.en[key] = entry;
           });
@@ -183,12 +193,22 @@ function App() {
       const templateCriteria = FACILITY_TRANSLATIONS.ar;
 
       Object.keys(templateCriteria).forEach(key => {
+        const tmpl = templateCriteria[key];
+        const columns = tmpl._columns;
         initialData[key] = {
           inspector: '',
           date: new Date().toISOString().split('T')[0],
           notes: '',
           siteId: '',
-          rows: templateCriteria[key].items.map(item => ({ ...INITIAL_ROW, criteria: item })),
+          rows: tmpl.items.map(item => {
+            const row = { ...INITIAL_ROW, criteria: item };
+            if (columns && columns.length > 0) {
+              columns.forEach(col => {
+                if (col.type !== 'label') row[col.id] = '';
+              });
+            }
+            return row;
+          }),
           photos: []
         };
       });
@@ -405,7 +425,8 @@ function App() {
 
   // Compute analytics
   const currentData = translatedFormData[activeTab];
-  const currentScore = useMemo(() => currentData ? calculateScore(formData[activeTab]?.rows) : 0, [formData, activeTab]);
+  const activeColumns = FACILITY_TRANSLATIONS.ar[activeTab]?._columns || null;
+  const currentScore = useMemo(() => currentData ? calculateScore(formData[activeTab]?.rows, activeColumns) : 0, [formData, activeTab, activeColumns]);
 
 
   // Header change handler
@@ -506,6 +527,8 @@ function App() {
   // Reset form
   const resetForm = (tabId) => {
     const templateCriteria = FACILITY_TRANSLATIONS.ar;
+    const tmpl = templateCriteria[tabId];
+    const columns = tmpl._columns;
     setFormData(prev => ({
       ...prev,
       [tabId]: {
@@ -513,7 +536,15 @@ function App() {
         date: new Date().toISOString().split('T')[0],
         notes: '',
         siteId: '',
-        rows: templateCriteria[tabId].items.map(item => ({ ...INITIAL_ROW, criteria: item })),
+        rows: tmpl.items.map(item => {
+          const row = { ...INITIAL_ROW, criteria: item };
+          if (columns && columns.length > 0) {
+            columns.forEach(col => {
+              if (col.type !== 'label') row[col.id] = '';
+            });
+          }
+          return row;
+        }),
         photos: []
       }
     }));
@@ -535,7 +566,8 @@ function App() {
     }
 
     try {
-      const score = calculateScore(currentRaw.rows);
+      const tmplColumns = FACILITY_TRANSLATIONS.ar[activeTab]?._columns || null;
+      const score = calculateScore(currentRaw.rows, tmplColumns);
       const photoUrls = [];
 
       // If online and we have photos, upload them
@@ -671,48 +703,6 @@ function App() {
     }
   };
 
-  const handleWizardStart = ({ siteId, templateKey, inspectorName }) => {
-    if (!FACILITY_TRANSLATIONS.ar[templateKey]) {
-      const customKey = templateKey.startsWith('custom_') ? templateKey : null;
-      if (!customKey) {
-        alert('Template not found.');
-        return;
-      }
-    }
-    const current = formData[templateKey];
-    if (!current) {
-      const template = FACILITY_TRANSLATIONS.ar[templateKey];
-      const initialRows = template?.items?.map(item => ({ ...INITIAL_ROW, criteria: item })) || [];
-      setFormData(prev => ({
-        ...prev,
-        [templateKey]: {
-          inspector: inspectorName,
-          date: new Date().toISOString().split('T')[0],
-          notes: '',
-          siteId: siteId || '',
-          rows: initialRows,
-          photos: []
-        }
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [templateKey]: {
-          ...prev[templateKey],
-          inspector: inspectorName,
-          siteId: siteId || ''
-        }
-      }));
-    }
-    setActiveTab(templateKey);
-    setViewMode('inspection');
-    setViewingRecordId(null);
-  };
-
-  const handleStartAudit = ({ siteId, templateKey, inspectorName }) => {
-    handleWizardStart({ siteId, templateKey, inspectorName });
-  };
-
   const handlePrint = () => {
     window.print();
   };
@@ -766,14 +756,6 @@ function App() {
             </button>
           </div>
           <nav className="p-4 space-y-2">
-            <button
-              onClick={() => setShowStartAudit(true)}
-              className="w-full text-start p-3 rounded-lg flex items-center gap-3 transition-colors focus-ring bg-green-600 text-white shadow-lg font-bold"
-            >
-              <Sparkles size={20} className="flex-shrink-0" />
-              <span className="truncate">{t.newInspection}</span>
-            </button>
-
             <div className="text-xs text-slate-500 font-bold px-2 mb-2">{t.siteInspection}</div>
             
             {Object.keys(FACILITY_TRANSLATIONS[lang] || FACILITY_TRANSLATIONS.ar)
@@ -998,15 +980,6 @@ function App() {
               {viewMode === 'inspection' && (
                 <div className="flex items-center gap-1.5 sm:gap-2">
 
-                  <button
-                    onClick={() => setShowStartAudit(true)}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-white bg-amber-600 hover:bg-amber-700 rounded-lg shadow-sm transition-colors text-xs sm:text-sm font-medium focus-ring"
-                    title={t.newInspection}
-                  >
-                    <Sparkles size={16} />
-                    <span className="hidden sm:inline">{t.newInspection}</span>
-                  </button>
-
                   <div className="px-2.5 py-1 sm:px-4 sm:py-1.5 bg-white rounded-lg border border-gray-200 flex items-center gap-1.5 sm:gap-3 shadow-sm">
                     <span className="text-[10px] sm:text-xs text-gray-500 font-bold">{t.score}</span>
                     <span className={`text-base sm:text-xl font-bold ${getScoreColor(currentScore)}`}>{currentScore}%</span>
@@ -1083,6 +1056,7 @@ function App() {
                   handleDownloadPDF={handleDownloadPDF}
                   t={t}
                   isRtl={isRtl}
+                  activeColumns={activeColumns}
                 />
               </div>
             )}
@@ -1135,27 +1109,11 @@ function App() {
             )}
 
             {viewMode === 'builder' && (
-              <TemplateBuilder t={t} lang={lang} />
+              <TemplateBuilder t={t} lang={lang} onTemplatesChange={() => window.location.reload()} />
             )}
           </main>
         </div>
       </div>
-
-      <QuickInspectionWizard
-        isOpen={showQuickWizard}
-        onClose={() => setShowQuickWizard(false)}
-        onStart={handleWizardStart}
-        t={t}
-        lang={lang}
-      />
-
-      <StartAuditDialog
-        isOpen={showStartAudit}
-        onClose={() => setShowStartAudit(false)}
-        onStart={handleStartAudit}
-        t={t}
-        lang={lang}
-      />
     </div>
   );
 }
