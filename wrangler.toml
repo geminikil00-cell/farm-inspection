@@ -1,4 +1,4 @@
-name = "farm-inspection"
+name = "farm-inspection-report-finilzed"
 # Fill in your Cloudflare account_id to deploy via Workers
 # account_id = ""
 compatibility_date = "2026-07-18"

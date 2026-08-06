@@ -23,7 +23,7 @@ class ErrorBoundary extends React.Component {
       return (
         <div style={{
           padding: 40,
-          maxWidth: 500,
+          maxWidth: 600,
           margin: '80px auto',
           textAlign: 'center',
           fontFamily: 'Tajawal, system-ui, sans-serif',
@@ -37,6 +37,23 @@ class ErrorBoundary extends React.Component {
           <p style={{ color: '#666', fontSize: 14, marginBottom: 20 }}>
             An unexpected error occurred. Please try again or refresh the page.
           </p>
+          {this.state.error && (
+            <pre style={{
+              background: '#fff3f3',
+              border: '1px solid #fcc',
+              borderRadius: 6,
+              padding: 12,
+              margin: '0 auto 20px',
+              maxWidth: '90%',
+              textAlign: 'left',
+              fontSize: 12,
+              color: '#c00',
+              overflow: 'auto',
+              whiteSpace: 'pre-wrap',
+            }}>
+              {String(this.state.error)}
+            </pre>
+          )}
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
             <button
               onClick={this.handleRetry}
