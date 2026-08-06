@@ -139,7 +139,7 @@ export const HistoryPanel = ({
           </div>
         ) : groupedGroups.length === 0 ? (
           <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
-            <p className="text-gray-500 font-medium">No records match the active filter criteria.</p>
+            <p className="text-gray-500 font-medium">{t.noFilterMatches || 'No records match the active filter criteria.'}</p>
           </div>
         ) : (
           <div className="space-y-8">

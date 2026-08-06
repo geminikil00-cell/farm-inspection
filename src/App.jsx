@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Sprout, Warehouse, Droplet, ShieldAlert, Home,
   Wrench, Trash2, Waves, Package, Users, ClipboardList,
   History, BarChart3, ChevronLeft, ChevronRight, Save,
-  Printer, Plus, ArrowLeftRight, Trash, Globe, Shield, RefreshCw,
-  Menu, X, FileDown, MapPin, Building2, ClipboardEdit, FileText
+  Printer, ArrowLeftRight, Trash, Globe, Shield, RefreshCw,
+  Menu, X, MapPin, Building2, ClipboardEdit, FileText
 } from 'lucide-react';
 import { supabase } from './supabase';
 import { saveToDB, getFromDB } from './db';
@@ -16,6 +16,8 @@ import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 import { ComparisonPanel } from './components/ComparisonPanel';
 import { UnitAdminPortal, SystemAdminPortal } from './components/AdminPortal';
 import { TemplateBuilder } from './components/TemplateBuilder';
+import { logger } from './utils/logger';
+import { getScoreColor, getQuarterAndYear, calculateScore } from './utils/score';
 
 const INITIAL_ROW = {
   status: '',
@@ -40,80 +42,6 @@ const FACILITY_ICONS = {
   generalFacilities: ClipboardList
 };
 
-// Simple helper to get score color class
-const getScoreColor = (score) => {
-  if (score >= 90) return 'text-green-600';
-  if (score >= 80) return 'text-blue-600';
-  if (score >= 60) return 'text-cyan-600';
-  if (score >= 40) return 'text-yellow-600';
-  return 'text-red-600';
-};
-
-// Simple helper to calculate inspector year and quarter immune to timezone parsing issues
-const getQuarterAndYear = (dateStr) => {
-  if (!dateStr) {
-    const d = new Date();
-    const month = d.getMonth();
-    const year = d.getFullYear();
-    const q = month < 3 ? 'Q1' : month < 6 ? 'Q2' : month < 9 ? 'Q3' : 'Q4';
-    return { year, quarter: q };
-  }
-  const parts = dateStr.split('-');
-  const year = parseInt(parts[0], 10);
-  const month = parseInt(parts[1], 10); // 1-12
-  let quarter = 'Q1';
-  if (month >= 4 && month <= 6) quarter = 'Q2';
-  else if (month >= 7 && month <= 9) quarter = 'Q3';
-  else if (month >= 10 && month <= 12) quarter = 'Q4';
-  return { year, quarter };
-};
-
-// Simple helper to calculate inspector score
-const calculateScore = (rows, columns) => {
-  if (!Array.isArray(rows)) return 0;
-  let totalScore = 0;
-  let count = 0;
-
-  if (columns && columns.length > 0) {
-    columns.forEach(col => {
-      if (col.type === 'select' && col.options) {
-        const scoreMap = {};
-        col.options.forEach(opt => { if (opt.score != null) scoreMap[opt.value] = opt.score; });
-        rows.forEach(row => {
-          const val = row[col.id];
-          if (val && scoreMap[val] !== undefined) {
-            totalScore += scoreMap[val];
-            count++;
-          }
-        });
-      }
-    });
-  } else {
-    const scoreMapping = {
-      'ممتاز': 100,
-      'جيد جداً': 80,
-      'جيد': 60,
-      'مقبول': 40,
-      'سيء': 0
-    };
-    rows.forEach(row => {
-      if (row.status && scoreMapping[row.status] !== undefined) {
-        totalScore += scoreMapping[row.status];
-        count++;
-      }
-      for (let i = 1; i <= 6; i++) {
-        const key = `status_${i}`;
-        if (row[key] && scoreMapping[row[key]] !== undefined) {
-          totalScore += scoreMapping[row[key]];
-          count++;
-        }
-      }
-    });
-  }
-  if (count === 0) return 0;
-  return Math.round(totalScore / count);
-};
-
 function App() {
   const [lang, setLang] = useState('ar');
   const [activeTab, setActiveTab] = useState('greenhouses');
@@ -130,6 +58,7 @@ function App() {
   const [historyFull, setHistoryFull] = useState(null);
   const [historyFullLoading, setHistoryFullLoading] = useState(false);
   const [customTemplates, setCustomTemplates] = useState([]);
+  const [saving, setSaving] = useState(false);
 
   // Active translation dictionary with automatic English fallback for un-translated keys
   const t = useMemo(() => {
@@ -186,7 +115,7 @@ function App() {
           });
         }
       } catch (e) {
-        console.error('Failed to fetch custom templates:', e);
+        logger.error('Failed to fetch custom templates:', e);
       }
       
       // Use Arabic template keys dynamically mapped to chosen criteria
@@ -231,7 +160,7 @@ function App() {
           setFormData(initialData);
         }
       } catch (e) {
-        console.error("Failed to load IndexedDB drafts:", e);
+        logger.error("Failed to load IndexedDB drafts:", e);
         setFormData(initialData);
       }
       setIsDataLoaded(true);
@@ -264,10 +193,10 @@ function App() {
         .limit(1000);
 
       if (error) {
-        console.error("Supabase fetch error:", error);
+        logger.error("Supabase fetch error:", error);
         if (retryCount < MAX_RETRIES) {
           const delay = Math.pow(2, retryCount) * 1000;
-          console.warn(`Retry ${retryCount + 1}/${MAX_RETRIES} in ${delay}ms...`);
+          logger.warn(`Retry ${retryCount + 1}/${MAX_RETRIES} in ${delay}ms...`);
           await new Promise(r => setTimeout(r, delay));
           return fetchHistory(retryCount + 1);
         }
@@ -279,10 +208,10 @@ function App() {
         setHistoryError(null);
       }
     } catch (err) {
-      console.error("Network error fetching Supabase records:", err);
+      logger.error("Network error fetching Supabase records:", err);
       if (retryCount < MAX_RETRIES) {
         const delay = Math.pow(2, retryCount) * 1000;
-        console.warn(`Retry ${retryCount + 1}/${MAX_RETRIES} in ${delay}ms...`);
+        logger.warn(`Retry ${retryCount + 1}/${MAX_RETRIES} in ${delay}ms...`);
         await new Promise(r => setTimeout(r, delay));
         return fetchHistory(retryCount + 1);
       }
@@ -309,7 +238,7 @@ function App() {
         .limit(1000);
 
       if (error) {
-        console.error("Supabase full fetch error:", error);
+        logger.error("Supabase full fetch error:", error);
         if (retryCount < MAX_RETRIES) {
           const delay = Math.pow(2, retryCount) * 1000;
           await new Promise(r => setTimeout(r, delay));
@@ -320,7 +249,7 @@ function App() {
       const normalized = (data || []).map(normalizeRecord);
       setHistoryFull(normalized);
     } catch (err) {
-      console.error("Network error fetching full Supabase records:", err);
+      logger.error("Network error fetching full Supabase records:", err);
       if (retryCount < MAX_RETRIES) {
         const delay = Math.pow(2, retryCount) * 1000;
         await new Promise(r => setTimeout(r, delay));
@@ -376,7 +305,7 @@ function App() {
         })
         .subscribe();
     } catch (err) {
-      console.warn("Realtime sync channel setup failed:", err);
+      logger.warn("Realtime sync channel setup failed:", err);
     }
 
     return () => {
@@ -559,6 +488,7 @@ function App() {
 
   // Save inspection to Supabase (and storage bucket)
   const saveToHistory = async () => {
+    if (saving) return;
     const currentRaw = formData[activeTab];
     if (!currentRaw.inspector) {
       alert(t.enterInspector);
@@ -566,6 +496,7 @@ function App() {
     }
 
     try {
+      setSaving(true);
       const tmplColumns = FACILITY_TRANSLATIONS.ar[activeTab]?._columns || null;
       const score = calculateScore(currentRaw.rows, tmplColumns);
       const photoUrls = [];
@@ -585,7 +516,7 @@ function App() {
               .upload(fileName, blob, { contentType: `image/${ext}`, upsert: true });
 
             if (uploadError) {
-              console.error("Storage upload failed, falling back to base64:", uploadError);
+              logger.error("Storage upload failed, falling back to base64:", uploadError);
               photoUrls.push(base64);
             } else {
               const { data: urlData } = supabase.storage
@@ -594,7 +525,7 @@ function App() {
               photoUrls.push(urlData.publicUrl);
             }
           } catch (uploadErr) {
-            console.error("Photo process failed, pushing base64:", uploadErr);
+            logger.error("Photo process failed, pushing base64:", uploadErr);
             photoUrls.push(base64);
           }
         }
@@ -633,8 +564,10 @@ function App() {
         resetForm(activeTab);
       }
     } catch (err) {
-      console.error("Failed to submit record:", err);
+      logger.error("Failed to submit record:", err);
       alert("Submission Error: " + err.message);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -645,7 +578,7 @@ function App() {
         const { error } = await supabase.from('inspection_tool_records').delete().eq('id', id);
         if (error) throw error;
       } catch (err) {
-        console.error("Delete record error:", err);
+        logger.error("Delete record error:", err);
         alert("Deletion Error: " + err.message);
       }
     }
@@ -673,7 +606,7 @@ function App() {
           if (error) throw error;
           fullRecord = normalizeRecord(fetched);
         } catch (err) {
-          console.error("Error loading full record:", err);
+          logger.error("Error loading full record:", err);
           alert("Error loading record: " + err.message);
           return;
         }
@@ -704,10 +637,6 @@ function App() {
   };
 
   const handlePrint = () => {
-    window.print();
-  };
-
-  const handleDownloadPDF = () => {
     window.print();
   };
 
@@ -987,10 +916,13 @@ function App() {
 
                   <button
                     onClick={saveToHistory}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-white bg-green-600 hover:bg-green-700 rounded-lg shadow-sm transition-colors text-xs sm:text-sm font-medium focus-ring"
+                    disabled={saving}
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-white rounded-lg shadow-sm transition-colors text-xs sm:text-sm font-medium focus-ring ${
+                      saving ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
+                    }`}
                     aria-label="Save Inspection"
                   >
-                    <Save size={16} />
+                    {saving ? <RefreshCw size={16} className="animate-spin" /> : <Save size={16} />}
                     <span className="hidden sm:inline">{t.save}</span>
                   </button>
 
@@ -1001,16 +933,6 @@ function App() {
                   >
                     <Trash size={16} />
                     <span className="hidden md:inline">{t.clear}</span>
-                  </button>
-
-                  <button
-                    onClick={handleDownloadPDF}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors text-xs sm:text-sm font-medium focus-ring"
-                    aria-label="Download PDF"
-                    title={t.downloadPDF || 'Download PDF'}
-                  >
-                    <FileDown size={16} />
-                    <span className="hidden sm:inline">{t.downloadPDF || 'Download PDF'}</span>
                   </button>
 
                   <button
@@ -1053,7 +975,6 @@ function App() {
                   clearCurrentForm={clearCurrentForm}
                   saveToHistory={saveToHistory}
                   handlePrint={handlePrint}
-                  handleDownloadPDF={handleDownloadPDF}
                   t={t}
                   isRtl={isRtl}
                   activeColumns={activeColumns}

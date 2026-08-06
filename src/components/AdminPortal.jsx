@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, Settings, Shield, Building2, Globe } from 'lucide-react';
+import { MapPin, Shield, Building2, Globe } from 'lucide-react';
 import { SiteManagement } from './SiteManagement';
 
 const TABS = [

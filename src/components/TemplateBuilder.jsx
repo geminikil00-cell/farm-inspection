@@ -6,11 +6,8 @@ import {
 import { supabase } from '../supabase';
 import { DialogOverlay } from './DialogOverlay';
 import { FACILITY_TRANSLATIONS } from '../translations/criteria';
-
-let rowDragIndex = null;
-let rowDragOverIndex = null;
-let colDragIndex = null;
-let colDragOverIndex = null;
+import { logger } from '../utils/logger';
+import { getStatusDefaults } from '../utils/status';
 
 const COLOR_PRESETS = [
   { value: 'bg-green-100 text-green-800', label: 'Green', swatch: 'bg-green-500' },
@@ -21,19 +18,18 @@ const COLOR_PRESETS = [
   { value: 'bg-gray-100 text-gray-800', label: 'Gray', swatch: 'bg-gray-500' },
 ];
 
-const DEFAULT_COLUMNS = [
-  { id: 'criteria', header: 'المعيار / البند', type: 'label' },
-  { id: 'col_1', header: 'الحالة', type: 'select', options: [
-    { value: '', label: 'اختر حالة', color: 'bg-white', score: null },
-    { value: 'ممتاز', label: 'ممتاز', color: 'bg-green-100 text-green-800', score: 100 },
-    { value: 'جيد جداً', label: 'جيد جداً', color: 'bg-blue-100 text-blue-800', score: 80 },
-    { value: 'جيد', label: 'جيد', color: 'bg-cyan-100 text-cyan-800', score: 60 },
-    { value: 'مقبول', label: 'مقبول', color: 'bg-yellow-100 text-yellow-800', score: 40 },
-    { value: 'سيء', label: 'سيء', color: 'bg-red-100 text-red-800', score: 0 },
-  ]},
-  { id: 'col_2', header: 'الإجراء التصحيحي المطلوب', type: 'textarea' },
-  { id: 'col_3', header: 'المسؤول', type: 'textarea' },
-];
+const getDefaultColumns = () => {
+  const statusOpts = getStatusDefaults();
+  return [
+    { id: 'criteria', header: 'المعيار / البند', type: 'label' },
+    { id: 'col_1', header: 'الحالة', type: 'select', options: [
+      { value: '', label: 'اختر حالة', color: 'bg-white', score: null },
+      ...statusOpts,
+    ]},
+    { id: 'col_2', header: 'الإجراء التصحيحي المطلوب', type: 'textarea' },
+    { id: 'col_3', header: 'المسؤول', type: 'textarea' },
+  ];
+};
 
 const COL_TYPE_LABELS = {
   select: 'typeSelect',
@@ -61,6 +57,7 @@ export const TemplateBuilder = ({ t, lang, onTemplatesChange }) => {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [loading, setLoading] = useState(true);
   const [expandedCol, setExpandedCol] = useState(null);
+  const dragRefs = useRef({ rowIdx: null, rowOver: null, colIdx: null, colOver: null });
 
   const nameRef = useRef(null);
 
@@ -74,7 +71,7 @@ export const TemplateBuilder = ({ t, lang, onTemplatesChange }) => {
       if (error) throw error;
       setTemplates(data || []);
     } catch (err) {
-      console.error('Failed to fetch templates:', err);
+      logger.error('Failed to fetch templates:', err);
     } finally {
       setLoading(false);
     }
@@ -95,7 +92,7 @@ export const TemplateBuilder = ({ t, lang, onTemplatesChange }) => {
   const handleSelect = (template) => {
     setSelectedId(template.id);
     setName(template.name);
-    setColumns((template.columns && template.columns.length > 0) ? template.columns : DEFAULT_COLUMNS);
+    setColumns((template.columns && template.columns.length > 0) ? template.columns : getDefaultColumns());
     setItems((template.items || []).map((it, i) => ({ ...it, order: it.order ?? i })));
     setIsNew(false);
     setPreviewing(false);
@@ -105,7 +102,7 @@ export const TemplateBuilder = ({ t, lang, onTemplatesChange }) => {
   const handleNew = () => {
     resetEditor();
     setIsNew(true);
-    setColumns(DEFAULT_COLUMNS.map(c => JSON.parse(JSON.stringify(c))));
+    setColumns(getDefaultColumns().map(c => JSON.parse(JSON.stringify(c))));
     setItems([]);
     setTimeout(() => nameRef.current?.focus(), 100);
   };
@@ -162,36 +159,38 @@ export const TemplateBuilder = ({ t, lang, onTemplatesChange }) => {
     setItems(prev => prev.filter(it => it.id !== id));
   };
 
-  const handleRowDragStart = (index) => { rowDragIndex = index; };
-  const handleRowDragEnter = (index) => { rowDragOverIndex = index; };
+  const handleRowDragStart = (index) => { dragRefs.current.rowIdx = index; };
+  const handleRowDragEnter = (index) => { dragRefs.current.rowOver = index; };
   const handleRowDragEnd = () => {
-    if (rowDragIndex === null || rowDragOverIndex === null || rowDragIndex === rowDragOverIndex) {
-      rowDragIndex = null; rowDragOverIndex = null;
+    const { rowIdx, rowOver } = dragRefs.current;
+    if (rowIdx === null || rowOver === null || rowIdx === rowOver) {
+      dragRefs.current.rowIdx = null; dragRefs.current.rowOver = null;
       return;
     }
     const newItems = [...items];
-    const [dragged] = newItems.splice(rowDragIndex, 1);
-    newItems.splice(rowDragOverIndex, 0, dragged);
+    const [dragged] = newItems.splice(rowIdx, 1);
+    newItems.splice(rowOver, 0, dragged);
     setItems(newItems.map((it, i) => ({ ...it, order: i })));
-    rowDragIndex = null; rowDragOverIndex = null;
+    dragRefs.current.rowIdx = null; dragRefs.current.rowOver = null;
   };
 
-  const handleColDragStart = (index) => { colDragIndex = index; };
-  const handleColDragEnter = (index) => { colDragOverIndex = index; };
+  const handleColDragStart = (index) => { dragRefs.current.colIdx = index; };
+  const handleColDragEnter = (index) => { dragRefs.current.colOver = index; };
   const handleColDragEnd = () => {
-    if (colDragIndex === null || colDragOverIndex === null || colDragIndex === colDragOverIndex) {
-      colDragIndex = null; colDragOverIndex = null;
+    const { colIdx, colOver } = dragRefs.current;
+    if (colIdx === null || colOver === null || colIdx === colOver) {
+      dragRefs.current.colIdx = null; dragRefs.current.colOver = null;
       return;
     }
-    if (colDragIndex === 0 || colDragOverIndex === 0) {
-      colDragIndex = null; colDragOverIndex = null;
+    if (colIdx === 0 || colOver === 0) {
+      dragRefs.current.colIdx = null; dragRefs.current.colOver = null;
       return;
     }
     const newCols = [...columns];
-    const [dragged] = newCols.splice(colDragIndex, 1);
-    newCols.splice(colDragOverIndex, 0, dragged);
+    const [dragged] = newCols.splice(colIdx, 1);
+    newCols.splice(colOver, 0, dragged);
     setColumns(newCols);
-    colDragIndex = null; colDragOverIndex = null;
+    dragRefs.current.colIdx = null; dragRefs.current.colOver = null;
   };
 
   const validate = () => {
@@ -247,7 +246,7 @@ export const TemplateBuilder = ({ t, lang, onTemplatesChange }) => {
       resetEditor();
       if (onTemplatesChange) onTemplatesChange();
     } catch (err) {
-      console.error('Save template error:', err);
+      logger.error('Save template error:', err);
       alert('Save failed: ' + (err.message || 'Unknown error'));
     } finally {
       setSaving(false);
@@ -263,7 +262,7 @@ export const TemplateBuilder = ({ t, lang, onTemplatesChange }) => {
       if (onTemplatesChange) onTemplatesChange();
       setDeleteConfirm(null);
     } catch (err) {
-      console.error('Delete template error:', err);
+      logger.error('Delete template error:', err);
       alert('Delete failed: ' + (err.message || 'Unknown error'));
     }
   };

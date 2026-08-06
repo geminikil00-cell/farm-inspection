@@ -1,6 +1,8 @@
 const dbName = 'FarmInspectionDB';
 const dbVersion = 3;
 
+import { logger } from './utils/logger';
+
 const openDB = () => {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(dbName, dbVersion);
@@ -35,7 +37,7 @@ export const saveToDB = async (storeName, key, value) => {
       request.onerror = (event) => reject(event.target.error);
     });
   } catch (err) {
-    console.error("IndexedDB Save Error:", err);
+    logger.error("IndexedDB Save Error:", err);
   }
 };
 
@@ -50,7 +52,7 @@ export const getFromDB = async (storeName, key) => {
       request.onerror = (event) => reject(event.target.error);
     });
   } catch (err) {
-    console.error("IndexedDB Read Error:", err);
+    logger.error("IndexedDB Read Error:", err);
     return null;
   }
 };
@@ -66,7 +68,7 @@ export const getAllFromDB = async (storeName) => {
       request.onerror = (event) => reject(event.target.error);
     });
   } catch (err) {
-    console.error("IndexedDB Read All Error:", err);
+    logger.error("IndexedDB Read All Error:", err);
     return [];
   }
 };
@@ -82,12 +84,12 @@ export const deleteFromDB = async (storeName, key) => {
       request.onerror = (event) => reject(event.target.error);
     });
   } catch (err) {
-    console.error("IndexedDB Delete Error:", err);
+    logger.error("IndexedDB Delete Error:", err);
   }
 };
 
 export const generateId = () => {
-  return 'id_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 9);
+  return crypto.randomUUID();
 };
 
 export const getSites = async () => {

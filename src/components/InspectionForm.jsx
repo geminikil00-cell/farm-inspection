@@ -1,16 +1,9 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Calendar, User, FileText, Trash2, Printer, Save, Image as ImageIcon, Plus, ArrowLeftRight, FileDown, MapPin } from 'lucide-react';
+import { Calendar, User, FileText, Trash2, Image as ImageIcon, Plus, MapPin } from 'lucide-react';
 import { AutoResizeTextarea } from './AutoResizeTextarea';
 import { STATUS_OPTIONS } from '../translations';
 import { getSites, addSite } from '../db';
-
-const getScoreColor = (score) => {
-  if (score >= 90) return 'text-green-600';
-  if (score >= 80) return 'text-blue-600';
-  if (score >= 60) return 'text-cyan-600';
-  if (score >= 40) return 'text-yellow-600';
-  return 'text-red-600';
-};
+import { getScoreColor } from '../utils/score';
 
 export const InspectionForm = ({
   activeTab,
@@ -25,8 +18,6 @@ export const InspectionForm = ({
   clearCurrentForm,
   saveToHistory,
   handlePrint,
-  handleDownloadPDF,
-  t,
   isRtl,
   activeColumns
 }) => {
@@ -362,14 +353,6 @@ export const InspectionForm = ({
         >
           <Save size={14} />
           <span>{t.save}</span>
-        </button>
-
-        <button
-          onClick={handleDownloadPDF}
-          className="flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 text-white rounded-md text-xs font-bold shadow-sm"
-        >
-          <FileDown size={14} />
-          <span>PDF</span>
         </button>
 
         <button

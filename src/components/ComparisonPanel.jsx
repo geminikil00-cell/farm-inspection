@@ -5,6 +5,7 @@ import {
   Tooltip, Legend, LineChart, Line
 } from 'recharts';
 import { ArrowLeftRight, Calendar, MapPin, TrendingUp } from 'lucide-react';
+import { classifyStatus } from '../utils/status';
 
 const COLORS = {
   primary: '#3b82f6', // blue
@@ -93,11 +94,12 @@ export const ComparisonPanel = ({ history, facilities, t, lang }) => {
           r.data.rows.forEach(row => {
             if (!row.status) return;
             const s = row.status.trim();
-            if (['ممتاز', 'Excellent', '优'].some(v => s.includes(v))) counts.Excellent++;
-            else if (['جيد جداً', 'Very Good', '良'].some(v => s.includes(v))) counts.VeryGood++;
-            else if (['جيد', 'Good', '可'].some(v => s.includes(v))) counts.Good++;
-            else if (['مقبول', 'Acceptable', '不可'].some(v => s.includes(v))) counts.Acceptable++;
-            else if (['سيء', 'Bad', '极'].some(v => s.includes(v))) counts.Bad++;
+            const level = classifyStatus(s);
+            if (level === 'EXCELLENT') counts.Excellent++;
+            else if (level === 'VERY_GOOD') counts.VeryGood++;
+            else if (level === 'GOOD') counts.Good++;
+            else if (level === 'ACCEPTABLE') counts.Acceptable++;
+            else if (level === 'POOR') counts.Bad++;
           });
         }
       });
@@ -177,11 +179,12 @@ export const ComparisonPanel = ({ history, facilities, t, lang }) => {
           r.data.rows.forEach(row => {
             if (!row.status) return;
             const s = row.status.trim();
-            if (['ممتاز', 'Excellent', '优'].some(v => s.includes(v))) counts.Excellent++;
-            else if (['جيد جداً', 'Very Good', '良'].some(v => s.includes(v))) counts.VeryGood++;
-            else if (['جيد', 'Good', '可'].some(v => s.includes(v))) counts.Good++;
-            else if (['مقبول', 'Acceptable', '不可'].some(v => s.includes(v))) counts.Acceptable++;
-            else if (['سيء', 'Bad', '极'].some(v => s.includes(v))) counts.Bad++;
+            const level = classifyStatus(s);
+            if (level === 'EXCELLENT') counts.Excellent++;
+            else if (level === 'VERY_GOOD') counts.VeryGood++;
+            else if (level === 'GOOD') counts.Good++;
+            else if (level === 'ACCEPTABLE') counts.Acceptable++;
+            else if (level === 'POOR') counts.Bad++;
           });
         }
       });
@@ -399,8 +402,8 @@ export const ComparisonPanel = ({ history, facilities, t, lang }) => {
           <p className="font-bold text-lg">{t.noComparisonData}</p>
           <p className="text-sm mt-1">
             {compMode === 'time'
-              ? 'Please select at least one Year or Quarter filter to start comparing.'
-              : 'Select two locations to see side-by-side performance analysis.'}
+              ? (t.noComparisonTimeData || 'Please select at least one Year or Quarter filter.')
+              : (t.noComparisonLocationData || 'Select two locations to see side-by-side analysis.')}
           </p>
         </div>
       ) : (

@@ -859,7 +859,5 @@ function getTranslatedItem(lang, facilityId, index, defaultText) {
     ja: '項目'
   };
   
-  const prefix = prefixMap[lang] || 'Item';
-  // Use localized description derived from English for a clean, consistent experience.
-  return `${prefix} ${index + 1}: ${defaultText}`;
+  return defaultText;
 }

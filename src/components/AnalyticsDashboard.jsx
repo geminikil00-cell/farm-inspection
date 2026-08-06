@@ -4,6 +4,7 @@ import {
   Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell,
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
 } from 'recharts';
+import { classifyStatus } from '../utils/status';
 import { TrendingUp, BarChart2, PieChart as PieIcon, Activity, Calendar, Award } from 'lucide-react';
 import { FACILITY_TRANSLATIONS } from '../translations/criteria';
 
@@ -88,12 +89,12 @@ export const AnalyticsDashboard = ({ history, t, lang }) => {
       if (record.data && Array.isArray(record.data.rows)) {
         record.data.rows.forEach(row => {
           if (row.status) {
-            const statusVal = row.status.trim();
-            if (['ممتاز', 'Excellent', '优'].some(v => statusVal.includes(v))) statusCounts.Excellent++;
-            else if (['جيد جداً', 'Very Good', '良'].some(v => statusVal.includes(v))) statusCounts.VeryGood++;
-            else if (['جيد', 'Good', '可'].some(v => statusVal.includes(v))) statusCounts.Good++;
-            else if (['مقبول', 'Acceptable', '不可'].some(v => statusVal.includes(v))) statusCounts.Acceptable++;
-            else if (['سيء', 'Bad', '极'].some(v => statusVal.includes(v))) statusCounts.Bad++;
+            const level = classifyStatus(row.status);
+            if (level === 'EXCELLENT') statusCounts.Excellent++;
+            else if (level === 'VERY_GOOD') statusCounts.VeryGood++;
+            else if (level === 'GOOD') statusCounts.Good++;
+            else if (level === 'ACCEPTABLE') statusCounts.Acceptable++;
+            else if (level === 'POOR') statusCounts.Bad++;
           }
         });
       }
@@ -130,12 +131,12 @@ export const AnalyticsDashboard = ({ history, t, lang }) => {
       if (r.data && Array.isArray(r.data.rows)) {
         r.data.rows.forEach(row => {
           if (row.status) {
-            const statusVal = row.status.trim();
-            if (['ممتاز', 'Excellent', '优'].some(v => statusVal.includes(v))) quarterMap[qKey][t.excellentLabel]++;
-            else if (['جيد جداً', 'Very Good', '良'].some(v => statusVal.includes(v))) quarterMap[qKey][t.veryGoodLabel]++;
-            else if (['جيد', 'Good', '可'].some(v => statusVal.includes(v))) quarterMap[qKey][t.goodLabel]++;
-            else if (['مقبول', 'Acceptable', '不可'].some(v => statusVal.includes(v))) quarterMap[qKey][t.acceptableLabel]++;
-            else if (['سيء', 'Bad', '极'].some(v => statusVal.includes(v))) quarterMap[qKey][t.badLabel]++;
+            const level = classifyStatus(row.status);
+            if (level === 'EXCELLENT') quarterMap[qKey][t.excellentLabel]++;
+            else if (level === 'VERY_GOOD') quarterMap[qKey][t.veryGoodLabel]++;
+            else if (level === 'GOOD') quarterMap[qKey][t.goodLabel]++;
+            else if (level === 'ACCEPTABLE') quarterMap[qKey][t.acceptableLabel]++;
+            else if (level === 'POOR') quarterMap[qKey][t.badLabel]++;
           }
         });
       }
@@ -185,7 +186,7 @@ export const AnalyticsDashboard = ({ history, t, lang }) => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 no-print">
         <h3 className="text-base sm:text-lg font-bold text-gray-800 flex items-center gap-2">
           <Calendar className="text-blue-600" size={18} />
-          <span>Filters</span>
+          <span>{t.filtersLabel || 'Filters'}</span>
         </h3>
         <div className="flex flex-wrap gap-2 sm:gap-3 items-center w-full md:w-auto">
           <select
@@ -227,7 +228,7 @@ export const AnalyticsDashboard = ({ history, t, lang }) => {
 
       {filteredHistory.length === 0 ? (
         <div className="bg-gray-100 rounded-xl p-6 sm:p-8 text-center text-gray-500">
-          <p className="font-bold text-sm sm:text-base">No records match the active filter criteria.</p>
+          <p className="font-bold text-sm sm:text-base">{t.noFilterMatches || 'No records match the active filter criteria.'}</p>
         </div>
       ) : (
         <div className="analytics-print-container grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
