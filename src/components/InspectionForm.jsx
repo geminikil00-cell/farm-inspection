@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Calendar, User, FileText, Trash2, Image as ImageIcon, Plus, MapPin } from 'lucide-react';
+import { Calendar, User, FileText, Trash2, Save, Image as ImageIcon, Plus, MapPin } from 'lucide-react';
 import { AutoResizeTextarea } from './AutoResizeTextarea';
 import { STATUS_OPTIONS } from '../translations';
 import { getSites, addSite } from '../db';
