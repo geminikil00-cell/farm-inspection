@@ -18,6 +18,7 @@ export const InspectionForm = ({
   clearCurrentForm,
   saveToHistory,
   handlePrint,
+  t,
   isRtl,
   activeColumns
 }) => {
