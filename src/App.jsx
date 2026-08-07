@@ -4,7 +4,7 @@ import {
   Wrench, Trash2, Waves, Package, Users, ClipboardList,
   History, BarChart3, ChevronLeft, ChevronRight, Save,
   Printer, ArrowLeftRight, Trash, Globe, Shield, RefreshCw,
-  Menu, X, MapPin, Building2, ClipboardEdit, FileText
+  Menu, X, MapPin, ClipboardEdit, FileText
 } from 'lucide-react';
 import { supabase } from './supabase';
 import { saveToDB, getFromDB } from './db';
@@ -14,7 +14,6 @@ import { InspectionForm } from './components/InspectionForm';
 import { HistoryPanel } from './components/HistoryPanel';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 import { ComparisonPanel } from './components/ComparisonPanel';
-import { UnitAdminPortal, SystemAdminPortal } from './components/AdminPortal';
 import { TemplateBuilder } from './components/TemplateBuilder';
 import { logger } from './utils/logger';
 import { getScoreColor, getQuarterAndYear, calculateScore } from './utils/score';
@@ -792,34 +791,6 @@ function App() {
 
             <button
               onClick={() => {
-                setViewMode('unitAdmin');
-                if (window.innerWidth < 768) setShowSidebar(false);
-              }}
-              className={`w-full text-start p-3 rounded-lg flex items-center gap-3 transition-colors focus-ring ${
-                viewMode === 'unitAdmin' ? 'bg-teal-600 text-white shadow-lg font-bold' : 'hover:bg-slate-800 text-slate-300'
-              }`}
-              aria-current={viewMode === 'unitAdmin' ? 'page' : undefined}
-            >
-              <Building2 size={20} className="flex-shrink-0" />
-              <span>{t.unitAdmin}</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setViewMode('systemAdmin');
-                if (window.innerWidth < 768) setShowSidebar(false);
-              }}
-              className={`w-full text-start p-3 rounded-lg flex items-center gap-3 transition-colors focus-ring ${
-                viewMode === 'systemAdmin' ? 'bg-indigo-600 text-white shadow-lg font-bold' : 'hover:bg-slate-800 text-slate-300'
-              }`}
-              aria-current={viewMode === 'systemAdmin' ? 'page' : undefined}
-            >
-              <Shield size={20} className="flex-shrink-0" />
-              <span>{t.systemAdmin}</span>
-            </button>
-
-            <button
-              onClick={() => {
                 setViewMode('builder');
                 if (window.innerWidth < 768) setShowSidebar(false);
               }}
@@ -864,10 +835,6 @@ function App() {
                     ? t.historyHeader
                     : viewMode === 'comparisons'
                     ? t.comparisons
-                    : viewMode === 'unitAdmin'
-                    ? t.unitAdmin
-                    : viewMode === 'systemAdmin'
-                    ? t.systemAdmin
                     : viewMode === 'builder'
                     ? t.templateBuilder
                     : t.analytics}
@@ -1020,14 +987,6 @@ function App() {
                 lang={lang}
               />
             ))}
-
-            {viewMode === 'unitAdmin' && (
-              <UnitAdminPortal t={t} isRtl={isRtl} lang={lang} />
-            )}
-
-            {viewMode === 'systemAdmin' && (
-              <SystemAdminPortal t={t} isRtl={isRtl} lang={lang} />
-            )}
 
             {viewMode === 'builder' && (
               <TemplateBuilder t={t} lang={lang} onTemplatesChange={() => window.location.reload()} />
