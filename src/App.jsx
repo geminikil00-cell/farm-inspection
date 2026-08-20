@@ -4,7 +4,7 @@ import {
   Wrench, Trash2, Waves, Package, Users, ClipboardList,
   History, BarChart3, ChevronLeft, ChevronRight, Save,
   Printer, ArrowLeftRight, Trash, Globe, Shield, RefreshCw,
-  Menu, X, MapPin, ClipboardEdit, FileText
+  Menu, X, MapPin, ClipboardEdit, FileText, Zap
 } from 'lucide-react';
 import { supabase } from './supabase';
 import { saveToDB, getFromDB } from './db';
@@ -38,7 +38,8 @@ const FACILITY_ICONS = {
   packing: Package,
   femaleRestArea: Users,
   maleRestArea: Users,
-  generalFacilities: ClipboardList
+  generalFacilities: ClipboardList,
+  generatorDieselStation: Zap
 };
 
 function App() {

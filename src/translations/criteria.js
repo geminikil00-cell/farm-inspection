@@ -309,6 +309,35 @@ export const FACILITY_TRANSLATIONS = {
         'سلامة الأسوار والبوابات الرئيسية',
         'حالة مناطق التجمع الامنة في حالة الطوارئ'
       ]
+    },
+    generatorDieselStation: {
+      title: 'غرفة المولد ومحطة الديزل',
+      items: [
+        'نظافة غرفة المولد ومحيطها',
+        'خلو الأرضية من تسربات الزيت أو الديزل',
+        'خلو الغرفة والممرات من العوائق والمواد غير الضرورية',
+        'حالة الباب والالتزام بإغلاقه',
+        'حالة الإنارة والتهوية',
+        'توفر طفايات حريق صالحة وسهلة الوصول',
+        'توفر معدات معالجة الانسكابات',
+        'توفر لوحات إرشادية وتحذيرية',
+        'سهولة الوصول إلى زر الإيقاف الاضطراري',
+        'عدم وجود أصوات أو روائح أو دخان غير طبيعي',
+        'عدم تخزين مواد قابلة للاشتعال داخل الغرفة',
+        'توفر معدات الوقاية الشخصية المطلوبة',
+        'نظافة محطة الديزل ومحيطها',
+        'عدم وجود تسربات أو انسكابات ديزل',
+        'حالة خزان الديزل الخارجية وعدم وجود صدأ أو تلف ظاهر',
+        'حالة الأنابيب والخراطيم وعدم وجود تلف ظاهر',
+        'الالتزام بإغلاق الخزان وفتحات التعبئة',
+        'حالة حوض احتواء التسرب ونظافته',
+        'توفر معدات معالجة الانسكابات',
+        'توفر طفايات حريق صالحة وسهلة الوصول',
+        'توفر لوحات منع التدخين واللهب المكشوف',
+        'منع دخول الأشخاص غير المصرح لهم',
+        'خلو المحطة من المخلفات والمواد القابلة للاشتعال',
+        'توفر معدات الوقاية الشخصية'
+      ]
     }
   },
   en: {
@@ -618,6 +647,35 @@ export const FACILITY_TRANSLATIONS = {
         'Safety of fences and main gates',
         'Status of safe assembly points in case of emergency'
       ]
+    },
+    generatorDieselStation: {
+      title: 'Generator Room & Diesel Station',
+      items: [
+        'Cleanliness of the generator room and its surroundings',
+        'Floor free of oil or diesel leaks',
+        'Room and corridors free of obstacles and unnecessary materials',
+        'Status of the door and adherence to keeping it closed',
+        'Status of lighting and ventilation',
+        'Availability of valid and easily accessible fire extinguishers',
+        'Availability of spill response equipment',
+        'Availability of instructional and warning signs',
+        'Easy access to the emergency stop button',
+        'Absence of abnormal sounds, odors, or smoke',
+        'No storage of flammable materials inside the room',
+        'Availability of required personal protective equipment',
+        'Cleanliness of the diesel station and its surroundings',
+        'Absence of diesel leaks or spills',
+        'External condition of the diesel tank with no rust or visible damage',
+        'Condition of pipes and hoses with no visible damage',
+        'Adherence to closing the tank and filling openings',
+        'Condition and cleanliness of the spill containment basin',
+        'Availability of spill response equipment',
+        'Availability of valid and easily accessible fire extinguishers',
+        'Availability of no-smoking and open-flame signs',
+        'Prevention of unauthorized personnel entry',
+        'Station free of waste and flammable materials',
+        'Availability of personal protective equipment'
+      ]
     }
   }
 };
@@ -634,15 +692,15 @@ const OTHER_LANGUAGES = ['zh', 'es', 'hi', 'ur', 'fr', 'pt', 'ru', 'de', 'ja'];
 // Let's add basic translation mappings to make the other languages fully functional.
 // We can define the titles in other languages:
 const TITLES = {
-  zh: { greenhouses: '温室', warehouses: '仓库', irrigation: '灌溉室', nursery: '苗圃', pesticides: '农药库', accommodation: '员工宿舍', workshop: '维护车间', scrap: '废料区', lakes: '水池', packing: '包装与包装仓库', femaleRestArea: '女性休息区', maleRestArea: '男性休息区', generalFacilities: '农场公共设施' },
-  es: { greenhouses: 'Invernaderos', warehouses: 'Almacenes', irrigation: 'Sala de Riego', nursery: 'Vivero', pesticides: 'Almacén de Pesticidas', accommodation: 'Alojamiento de Trabajadores', workshop: 'Taller de Mantenimiento', scrap: 'Zona de Chatarra', lakes: 'Estanques', packing: 'Almacén de Empaque', femaleRestArea: 'Área de Descanso de Mujeres', maleRestArea: 'Área de Descanso de Hombres', generalFacilities: 'Instalaciones Generales de la Granja' },
-  hi: { greenhouses: 'ग्रीनहाउस', warehouses: 'गोदाम', irrigation: 'सिंचाई कक्ष', nursery: 'नर्सरी', pesticides: 'कीटनाशक गोदام', accommodation: 'श्रमिक आवास', workshop: 'रखरखाव कार्यशाला', scrap: 'कबाड़ क्षेत्र', lakes: 'तालाब', packing: 'पैकिंग गोदाम', femaleRestArea: 'महिला विश्राम क्षेत्र', maleRestArea: 'पुरुष विश्राम क्षेत्र', generalFacilities: 'सामान्य फार्म सुविधाएं' },
-  ur: { greenhouses: 'گرین ہاؤسز', warehouses: 'گودام', irrigation: 'آبپاشی کمرہ', nursery: 'نرسری', pesticides: 'کیڑے مار ادویات کا گودام', accommodation: 'مزدوروں کی رہائش', workshop: 'مرمتی ورکشاپ', scrap: 'سکریپ ایریا', lakes: 'تالاب', packing: 'پیکنگ گودام', femaleRestArea: 'خواتین کا آرام گاہ', maleRestArea: 'مردوں کا آرام گاہ', generalFacilities: 'عام فارم سہولیات' },
-  fr: { greenhouses: 'Serres', warehouses: 'Entrepôts', irrigation: 'Salle d\'Irrigation', nursery: 'Pépinière', pesticides: 'Stockage des Pesticides', accommodation: 'Logement des Ouvriers', workshop: 'Atelier de Maintenance', scrap: 'Zone de Ferraille', lakes: 'Étangs', packing: 'Entrepôt d\'Emballage', femaleRestArea: 'Zone de Repos des Femmes', maleRestArea: 'Zone de Repos des Hommes', generalFacilities: 'Installations Générales de la Ferme' },
-  pt: { greenhouses: 'Estufas', warehouses: 'Armazéns', irrigation: 'Sala de Irrigação', nursery: 'Viveiro', pesticides: 'Depósito de Pesticidas', accommodation: 'Alojamento de Trabalhadores', workshop: 'Oficina de Manutenção', scrap: 'Área de Sucata', lakes: 'Lagoas', packing: 'Depósito de Embalagem', femaleRestArea: 'Área de Descanso Feminino', maleRestArea: 'Área de Descanso Masculino', generalFacilities: 'Instalações Gerais da Fazenda' },
-  ru: { greenhouses: 'Теплицы', warehouses: 'Склады', irrigation: 'Ирригационная комната', nursery: 'Питомник', pesticides: 'Склад пестицидов', accommodation: 'Рабочее общежитие', workshop: 'Ремонтная мастерская', scrap: 'Зона металлолома', lakes: 'Пруды', packing: 'Упаковочный склад', femaleRestArea: 'Женская зона отдыха', maleRestArea: 'Мужская зона отдыха', generalFacilities: 'Общие объекты фермы' },
-  de: { greenhouses: 'Gewächshäuser', warehouses: 'Lagerhäuser', irrigation: 'Bewässerungsraum', nursery: 'Baumschule', pesticides: 'Pestizidlager', accommodation: 'Arbeiterunterkunft', workshop: 'Wartungswerkstatt', scrap: 'Schrottplatz', lakes: 'Teiche', packing: 'Verpackungslager', femaleRestArea: 'Damenruheraum', maleRestArea: 'Herrenruheraum', generalFacilities: 'Allgemeine Farmeinrichtungen' },
-  ja: { greenhouses: '温室', warehouses: '倉庫', irrigation: '灌溉室', nursery: '苗床', pesticides: '農薬保管庫', accommodation: '労働者宿舎', workshop: 'メンテナンス作業場', scrap: 'スクラップ置場', lakes: '溜め池', packing: '梱包・包装倉庫', femaleRestArea: '女性用休憩所', maleRestArea: '男性用休憩所', generalFacilities: '農場一般施設' }
+  zh: { greenhouses: '温室', warehouses: '仓库', irrigation: '灌溉室', nursery: '苗圃', pesticides: '农药库', accommodation: '员工宿舍', workshop: '维护车间', scrap: '废料区', lakes: '水池', packing: '包装与包装仓库', femaleRestArea: '女性休息区', maleRestArea: '男性休息区', generalFacilities: '农场公共设施', generatorDieselStation: '发电机房与柴油站' },
+  es: { greenhouses: 'Invernaderos', warehouses: 'Almacenes', irrigation: 'Sala de Riego', nursery: 'Vivero', pesticides: 'Almacén de Pesticidas', accommodation: 'Alojamiento de Trabajadores', workshop: 'Taller de Mantenimiento', scrap: 'Zona de Chatarra', lakes: 'Estanques', packing: 'Almacén de Empaque', femaleRestArea: 'Área de Descanso de Mujeres', maleRestArea: 'Área de Descanso de Hombres', generalFacilities: 'Instalaciones Generales de la Granja', generatorDieselStation: 'Sala de Generadores y Estación de Diésel' },
+  hi: { greenhouses: 'ग्रीनहाउस', warehouses: 'गोदाम', irrigation: 'सिंचाई कक्ष', nursery: 'नर्सरी', pesticides: 'कीटनाशक गोदाम', accommodation: 'श्रमिक आवास', workshop: 'रखरखाव कार्यशाला', scrap: 'कबाड़ क्षेत्र', lakes: 'तालाब', packing: 'पैकिंग गोदाम', femaleRestArea: 'महिला विश्राम क्षेत्र', maleRestArea: 'पुरुष विश्राम क्षेत्र', generalFacilities: 'सामान्य फार्म सुविधाएं', generatorDieselStation: 'जनरेटर कक्ष और डीजल स्टेशन' },
+  ur: { greenhouses: 'گرین ہاؤسز', warehouses: 'گودام', irrigation: 'آبپاشی کمرہ', nursery: 'نرسری', pesticides: 'کیڑے مار ادویات کا گودام', accommodation: 'مزدوروں کی رہائش', workshop: 'مرمتی ورکشاپ', scrap: 'سکریپ ایریا', lakes: 'تالاب', packing: 'پیکنگ گودام', femaleRestArea: 'خواتین کا آرام گاہ', maleRestArea: 'مردوں کا آرام گاہ', generalFacilities: 'عام فارم سہولیات', generatorDieselStation: 'جنریٹر روم اور ڈیزل اسٹیشن' },
+  fr: { greenhouses: 'Serres', warehouses: 'Entrepôts', irrigation: 'Salle d\'Irrigation', nursery: 'Pépinière', pesticides: 'Stockage des Pesticides', accommodation: 'Logement des Ouvriers', workshop: 'Atelier de Maintenance', scrap: 'Zone de Ferraille', lakes: 'Étangs', packing: 'Entrepôt d\'Emballage', femaleRestArea: 'Zone de Repos des Femmes', maleRestArea: 'Zone de Repos des Hommes', generalFacilities: 'Installations Générales de la Ferme', generatorDieselStation: 'Salle des Générateurs et Station Diesel' },
+  pt: { greenhouses: 'Estufas', warehouses: 'Armazéns', irrigation: 'Sala de Irrigação', nursery: 'Viveiro', pesticides: 'Depósito de Pesticidas', accommodation: 'Alojamento de Trabalhadores', workshop: 'Oficina de Manutenção', scrap: 'Área de Sucata', lakes: 'Lagoas', packing: 'Depósito de Embalagem', femaleRestArea: 'Área de Descanso Feminino', maleRestArea: 'Área de Descanso Masculino', generalFacilities: 'Instalações Gerais da Fazenda', generatorDieselStation: 'Sala de Geradores e Estação de Diesel' },
+  ru: { greenhouses: 'Теплицы', warehouses: 'Склады', irrigation: 'Ирригационная комната', nursery: 'Питомник', pesticides: 'Склад пестицидов', accommodation: 'Рабочее общежитие', workshop: 'Ремонтная мастерская', scrap: 'Зона металлолома', lakes: 'Пруды', packing: 'Упаковочный склад', femaleRestArea: 'Женская зона отдыха', maleRestArea: 'Мужская зона отдыха', generalFacilities: 'Общие объекты фермы', generatorDieselStation: 'Генераторная и дизельная станция' },
+  de: { greenhouses: 'Gewächshäuser', warehouses: 'Lagerhäuser', irrigation: 'Bewässerungsraum', nursery: 'Baumschule', pesticides: 'Pestizidlager', accommodation: 'Arbeiterunterkunft', workshop: 'Wartungswerkstatt', scrap: 'Schrottplatz', lakes: 'Teiche', packing: 'Verpackungslager', femaleRestArea: 'Damenruheraum', maleRestArea: 'Herrenruheraum', generalFacilities: 'Allgemeine Farmeinrichtungen', generatorDieselStation: 'Generatorraum und Dieselstation' },
+  ja: { greenhouses: '温室', warehouses: '倉庫', irrigation: '灌溉室', nursery: '苗床', pesticides: '農薬保管庫', accommodation: '労働者宿舎', workshop: 'メンテナンス作業場', scrap: 'スクラップ置場', lakes: '溜め池', packing: '梱包・包装倉庫', femaleRestArea: '女性用休憩所', maleRestArea: '男性用休憩所', generalFacilities: '農場一般施設', generatorDieselStation: '発電機室とディーゼルステーション' }
 };
 
 // Programmatically localize the criteria details using mappings or localized titles, to keep code compact and 100% correct.
