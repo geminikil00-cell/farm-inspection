@@ -4,7 +4,7 @@ import {
   Wrench, Trash2, Waves, Package, Users, ClipboardList,
   History, BarChart3, ChevronLeft, ChevronRight, Save,
   Printer, ArrowLeftRight, Trash, Globe, Shield, RefreshCw,
-  Menu, X, MapPin, ClipboardEdit, FileText, Zap
+  Menu, X, MapPin, ClipboardEdit, FileText, Zap, Download
 } from 'lucide-react';
 import { supabase } from './supabase';
 import { saveToDB, getFromDB } from './db';
@@ -910,6 +910,15 @@ function App() {
                   >
                     <Printer size={16} />
                     <span className="hidden md:inline">{t.print}</span>
+                  </button>
+
+                  <button
+                    onClick={handlePrint}
+                    className="hidden xs:flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors text-xs sm:text-sm focus-ring"
+                    aria-label="Download PDF"
+                  >
+                    <Download size={16} />
+                    <span className="hidden md:inline">{t.downloadPDF}</span>
                   </button>
                 </div>
               )}
