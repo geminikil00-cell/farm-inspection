@@ -9,6 +9,9 @@ export default {
       fontFamily: {
         sans: ['Tajawal', 'sans-serif'],
       },
+      screens: {
+        xs: '480px',
+      },
     },
   },
   plugins: [],
